@@ -43,7 +43,9 @@ public class SwiftTalk {
 		ToSwift.QUEUE_TO_SWIFT = conf.getProperty("QUEUE_TO_SWIFT");
 		System.out.println("QUEUE_TO_SWIFT = " + ToSwift.QUEUE_TO_SWIFT);
 		ToSwift.SLEEPING_DURATION = Integer.parseInt(conf.getProperty("SLEEPING_DURATION"));
-		System.out.println("SLEEP_DURATION = " + ToSwift.SLEEPING_DURATION);
+		System.out.println("SLEEPING_DURATION = " + ToSwift.SLEEPING_DURATION);
+		System.out.println("SwiftTalk is ready for business.");
+		System.out.println("-------------------------------------------------");
 
 		// Running thread in charge of sending messages to SAA
 		thread_to_swift = new ToSwift();

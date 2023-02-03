@@ -3,11 +3,16 @@
 
 package com.ooze.swifttalk;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Scanner;
 import java.util.stream.Stream;
+
+import com.ooze.manager.MQManager;
 
 public class ToSwift extends Thread {
 	public static String FOLDER_TO_SWIFT = null;
@@ -27,19 +32,40 @@ public class ToSwift extends Thread {
 	}
 	
 	public void sendMessagesToSAA() {
+		// Try to connect to MQ
+		MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL);
+
 		while(!SwiftTalk.exit) {
-			
+			// Initialise queue connection
+			queueManager.initConnction(QUEUE_TO_SWIFT);
+
 			// Scanning folder
 			Path directory = Paths.get(FOLDER_TO_SWIFT);
 			try (Stream<Path> stream = Files.list(directory)) {
 					stream.forEach(file -> {
 							if (Files.isRegularFile(file)) {
 								System.out.println("File found : " + file.getFileName());
+
+								// Get file content
+								StringBuilder content = new StringBuilder();
+								try (Scanner scanner = new Scanner(new File(file.toString()))) {
+									while (scanner.hasNextLine()) {
+											content.append(scanner.nextLine()).append("\n");
+									}
+								} catch (FileNotFoundException e) {
+									e.printStackTrace();
+								}
+
+								// Put message to queue
+								queueManager.mqPut(content.toString());
 							}
 					});
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+
+			// Close queue connection
+			queueManager.closeConnection();
 
 			// Sleeping
 			System.out.println("Seelping for " + SLEEPING_DURATION + " seconds.");
@@ -48,7 +74,10 @@ public class ToSwift extends Thread {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+
 		}
+
 		System.out.println("\t-> ToSwift() thread stopped.");
 	}
+
 }
