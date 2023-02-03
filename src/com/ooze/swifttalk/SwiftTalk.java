@@ -5,6 +5,9 @@ import java.util.Properties;
 import com.ooze.utils.FileUtils;
 
 public class SwiftTalk {
+	// Token to quit SwiftTalk
+	public static boolean exit=false;
+	public static Thread thread_to_swift = null;
 
 	public static void main(String[] args) {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -39,23 +42,33 @@ public class SwiftTalk {
 		System.out.println("CHANNEL = " + ToSwift.CHANNEL);
 		ToSwift.QUEUE_TO_SWIFT = conf.getProperty("QUEUE_TO_SWIFT");
 		System.out.println("QUEUE_TO_SWIFT = " + ToSwift.QUEUE_TO_SWIFT);
-		ToSwift.SLEEP_DURATION = Integer.parseInt(conf.getProperty("SLEEP_DURATION"));
-		System.out.println("SLEEP_DURATION = " + ToSwift.SLEEP_DURATION);
+		ToSwift.SLEEPING_DURATION = Integer.parseInt(conf.getProperty("SLEEPING_DURATION"));
+		System.out.println("SLEEP_DURATION = " + ToSwift.SLEEPING_DURATION);
 
 		// Running thread in charge of sending messages to SAA
-		Thread thread_to_swift = new ToSwift();
+		thread_to_swift = new ToSwift();
 		thread_to_swift.start();
 		
 		// Wait in infinite loop
-		Thread currentThread = Thread.currentThread();
+		//Thread currentThread = Thread.currentThread();
 		try {
-			currentThread.join();
+			thread_to_swift.join();
+			//currentThread.join();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
 
 	public static void handleJVMShutdown() {
-		System.out.println("SwiftTalk ended.");
+		System.out.println("Trying to stop SwiftTalk...");
+		exit=true;
+		while (thread_to_swift.isAlive()) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		System.out.println("SwiftTalk stopped.");
 	}
 }
