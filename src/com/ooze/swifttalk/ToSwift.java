@@ -60,6 +60,8 @@ public class ToSwift extends Thread {
 								queueManager.mqPut(content.toString());
 							}
 					});
+				if(SwiftTalk.exit)
+					break;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

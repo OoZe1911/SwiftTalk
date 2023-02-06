@@ -1,6 +1,8 @@
 package com.ooze.manager;
 
+import com.ibm.mq.jms.MQConnectionFactory;
 import com.ibm.mq.jms.MQQueueConnectionFactory;
+import com.ibm.msg.client.jms.internal.JmsPropertyContextImpl;
 import com.ibm.msg.client.wmq.common.CommonConstants;
 import javax.jms.QueueSession;
 import javax.jms.Session;
@@ -9,10 +11,11 @@ import javax.jms.QueueSender;
 import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.QueueConnection;
+import javax.jms.QueueConnectionFactory;
 
 public class MQManager {
 
-	public MQQueueConnectionFactory connectionFactory = null;
+	public QueueConnectionFactory connectionFactory = null;
 	public QueueConnection queueConnection = null;
 	public QueueSession queueSession = null;
 	public QueueSender queueSender = null;
@@ -21,11 +24,11 @@ public class MQManager {
 		super();
 		try {
 			connectionFactory = new MQQueueConnectionFactory();
-			connectionFactory.setHostName(hostname);
-			connectionFactory.setPort(port);
-			connectionFactory.setQueueManager(qmgrname);
-			connectionFactory.setChannel(channel);
-			connectionFactory.setIntProperty(CommonConstants.WMQ_CONNECTION_MODE, CommonConstants.WMQ_CM_CLIENT);
+			((MQConnectionFactory) connectionFactory).setHostName(hostname);
+			((MQConnectionFactory) connectionFactory).setPort(port);
+			((MQConnectionFactory) connectionFactory).setQueueManager(qmgrname);
+			((MQConnectionFactory) connectionFactory).setChannel(channel);
+			((JmsPropertyContextImpl) connectionFactory).setIntProperty(CommonConstants.WMQ_CONNECTION_MODE, CommonConstants.WMQ_CM_CLIENT);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -38,8 +41,6 @@ public class MQManager {
 			queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 			Queue queue = queueSession.createQueue(queueName);
 			queueSender = queueSession.createSender(queue);
-			queueSender.setDisableMessageID(true);
-			queueSender.setDisableMessageTimestamp(true);
 		} catch (JMSException e) {
 			e.printStackTrace();
 		}
@@ -49,10 +50,14 @@ public class MQManager {
 		try {
 			// -> To avoid RFH2 header, configure the queue in QMGR like this :
 			// ALTER QL(QUEUE NAME) PROPCTL(NONE)
-			TextMessage message = queueSession.createTextMessage();
-			//message.setStringProperty("JMS_IBM_Format", "MQSTR");
-			//message.setIntProperty("JMS_IBM_PutApplType", 7);
-			message.setText(content);			
+			TextMessage message = queueSession.createTextMessage(content);
+			// To avoid RFH2 header
+			message.setIntProperty(CommonConstants.WMQ_MESSAGE_BODY, CommonConstants.WMQ_MESSAGE_BODY_MQ);
+			// To request PAN & NAN
+			message.setIntProperty(CommonConstants.JMS_IBM_REPORT_PAN, 1);
+			message.setIntProperty(CommonConstants.JMS_IBM_REPORT_NAN, 2);
+			message.setStringProperty(CommonConstants.JMS_IBM_MQMD_REPLYTOQMGR, "QMFAB");
+			message.setStringProperty(CommonConstants.JMS_IBM_MQMD_REPLYTOQ, "QL.FAB");
 			queueSender.send(message);
 		} catch (JMSException e) {
 			e.printStackTrace();
