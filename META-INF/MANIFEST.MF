@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Class-Path: ./libs/com.ibm.mq.allclient.jar ./libs/com.ibm.mq.jmqi.jar ./com.ibm.mqjms.jar ./libs/javax.jms-api-2.0.1.jar
+Class-Path: ./libs/com.ibm.mq.allclient.jar ./libs/com.ibm.mq.jmqi.jar ./com.ibm.mqjms.jar ./libs/javax.jms-api-2.0.1.jar ./libs/json.jar
 Main-Class: com.ooze.swifttalk.SwiftTalk

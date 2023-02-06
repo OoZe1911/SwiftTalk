@@ -36,7 +36,7 @@ public class ToSwift extends Thread {
 		MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL);
 
 		while(!SwiftTalk.exit) {
-			// Initialise queue connection
+			// Initialize queue connection
 			queueManager.initConnction(QUEUE_TO_SWIFT);
 
 			// Scanning folder
@@ -70,7 +70,6 @@ public class ToSwift extends Thread {
 			queueManager.closeConnection();
 
 			// Sleeping
-			System.out.println("Seelping for " + SLEEPING_DURATION + " seconds.");
 			try {
 				Thread.sleep(1000 * SLEEPING_DURATION);
 			} catch (InterruptedException e) {
