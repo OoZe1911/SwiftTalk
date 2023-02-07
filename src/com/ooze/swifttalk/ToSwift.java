@@ -13,14 +13,17 @@ import java.util.Scanner;
 import java.util.stream.Stream;
 
 import com.ooze.manager.MQManager;
+import com.ooze.utils.FileUtils;
 
 public class ToSwift extends Thread {
 	public static String FOLDER_TO_SWIFT = null;
+	public static String ARCHIVE_FOLDER = null;
 	public static String QMGRHOST = null;
 	public static String QMGRNAME=null;
 	public static int QMGRPORT=1414;
 	public static String CHANNEL=null;
 	public static String QUEUE_TO_SWIFT=null;
+	public static String REPLY_TO_QUEUE=null;
 	public static int SLEEPING_DURATION=10;
 
 	public ToSwift() {
@@ -32,10 +35,11 @@ public class ToSwift extends Thread {
 	}
 	
 	public void sendMessagesToSAA() {
-		// Try to connect to MQ
-		MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL);
 
 		while(!SwiftTalk.exit) {
+			// Try to connect to MQ
+			MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL);
+
 			// Initialize queue connection
 			queueManager.initConnction(QUEUE_TO_SWIFT);
 
@@ -44,24 +48,40 @@ public class ToSwift extends Thread {
 			try (Stream<Path> stream = Files.list(directory)) {
 					stream.forEach(file -> {
 							if (Files.isRegularFile(file)) {
-								System.out.println("File found : " + file.getFileName());
 
-								// Get file content
-								StringBuilder content = new StringBuilder();
-								try (Scanner scanner = new Scanner(new File(file.toString()))) {
-									while (scanner.hasNextLine()) {
-											content.append(scanner.nextLine()).append("\n");
+								if (!FileUtils.isFileLocked(new File(file.toString()))) {
+
+									if(!file.getFileName().toString().substring(0, 1).equals(".")) {
+
+										// Get file content
+										StringBuilder content = new StringBuilder();
+										try (Scanner scanner = new Scanner(new File(file.toString()))) {
+											while (scanner.hasNextLine()) {
+													content.append(scanner.nextLine()).append("\n");
+											}
+										} catch (FileNotFoundException e) {
+											e.printStackTrace();
+										}
+		
+										// Put message to queue
+										queueManager.mqPut(content.toString());
+										System.out.println("File : " + file.toString() + " sent.");
+	
+										// Archive file
+										archiveFile(file.getFileName().toString());
+	
 									}
-								} catch (FileNotFoundException e) {
-									e.printStackTrace();
+
+								} else {
+									System.out.println("File " + file.toString() + " is locked, skipping.");
 								}
 
-								// Put message to queue
-								queueManager.mqPut(content.toString());
 							}
 					});
+
 				if(SwiftTalk.exit)
 					break;
+
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -78,7 +98,27 @@ public class ToSwift extends Thread {
 
 		}
 
-		System.out.println("\t-> ToSwift() thread stopped.");
 	}
 
+	public static boolean archiveFile(String file) {
+		System.out.println("Archiving file : " + file);
+		File physicalFile = new File(FOLDER_TO_SWIFT + File.separator + file);
+		if (physicalFile.renameTo(new File(ARCHIVE_FOLDER, physicalFile.getName()))) {
+			System.out.println("File " + physicalFile.toString() + " archived in " + ARCHIVE_FOLDER);
+			return true;
+		}
+		if (FileUtils.fileExists(file)) {
+			System.out.println("A file with a same filename has been already archived");
+			File oldOne = new File(ARCHIVE_FOLDER + File.separator + physicalFile.getName());
+			oldOne.delete();
+			if (!physicalFile.renameTo(new File(ARCHIVE_FOLDER, physicalFile.getName()))) {
+				System.out.println("Can not archives file " + physicalFile.toString() + " in " + ARCHIVE_FOLDER);
+				return false;
+			}
+			return true;
+		}
+		System.out.println("File does not exist anymore, can not archive.");
+		return true;
+	}
+	
 }

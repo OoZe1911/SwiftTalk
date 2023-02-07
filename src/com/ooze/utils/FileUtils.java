@@ -55,6 +55,8 @@ public class FileUtils {
 					reader.close();
 					if(processLocking)
 						return true;
+					else
+						return false;
 				} catch (Exception e) {
 		            e.printStackTrace();
 		            return true;

@@ -1,2 +1,0 @@
-java.io.File f = new java.io.File("/Users/fabrice/youtube-dl.conf.pluralsight");
-System.out.println(com.ooze.utils.FileUtils.isFileLocked(f));

@@ -8,6 +8,7 @@ import com.ibm.mq.MQPutMessageOptions;
 import com.ibm.mq.MQQueue;
 import com.ibm.mq.MQQueueManager;
 import com.ibm.mq.constants.MQConstants;
+import com.ooze.swifttalk.ToSwift;
 
 public class MQManager {
 
@@ -40,9 +41,10 @@ public class MQManager {
 			MQPutMessageOptions pmo = new MQPutMessageOptions();
 			pmo.options = MQConstants.MQPMO_ASYNC_RESPONSE;
 			MQMessage message = new MQMessage();
+			message.correlationId="TESTFAB".getBytes();
 			message.report = MQConstants.MQRO_PAN & MQConstants.MQRO_NAN;
-			message.replyToQueueManagerName = "QMFAB";
-			message.replyToQueueName = "QL.FAB";
+			message.replyToQueueManagerName = ToSwift.QMGRNAME;
+			message.replyToQueueName = ToSwift.REPLY_TO_QUEUE;
 			message.format = MQConstants.MQFMT_STRING;
 			message.writeString(content);
 			queue.put(message, pmo);
