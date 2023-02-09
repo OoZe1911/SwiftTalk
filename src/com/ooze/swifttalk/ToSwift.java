@@ -12,6 +12,8 @@ import java.nio.file.Paths;
 import java.util.Scanner;
 import java.util.stream.Stream;
 
+import com.ibm.mq.MQException;
+import com.ibm.mq.MQQueue;
 import com.ooze.manager.MQManager;
 import com.ooze.utils.FileUtils;
 
@@ -41,7 +43,7 @@ public class ToSwift extends Thread {
 			MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL);
 
 			// Initialize queue connection
-			queueManager.initConnction(QUEUE_TO_SWIFT);
+			MQQueue queue = queueManager.initConnctionToQueue(QUEUE_TO_SWIFT);
 
 			// Scanning folder
 			Path directory = Paths.get(FOLDER_TO_SWIFT);
@@ -49,9 +51,9 @@ public class ToSwift extends Thread {
 					stream.forEach(file -> {
 							if (Files.isRegularFile(file)) {
 
-								if (!FileUtils.isFileLocked(new File(file.toString()))) {
+								if(!file.getFileName().toString().substring(0, 1).equals(".")) {
 
-									if(!file.getFileName().toString().substring(0, 1).equals(".")) {
+									if (!FileUtils.isFileLocked(new File(file.toString()))) {
 
 										// Get file content
 										StringBuilder content = new StringBuilder();
@@ -64,16 +66,15 @@ public class ToSwift extends Thread {
 										}
 		
 										// Put message to queue
-										queueManager.mqPut(content.toString());
-										System.out.println("File : " + file.toString() + " sent.");
+										queueManager.mqPut(queue, content.toString());
+										System.out.println("File : " + file.toString() + " sent to MQ queue " + queue.getResolvedQName() + ".");
 	
 										// Archive file
 										archiveFile(file.getFileName().toString());
 	
+									} else {
+										System.out.println("File " + file.toString() + " is locked, skipping.");
 									}
-
-								} else {
-									System.out.println("File " + file.toString() + " is locked, skipping.");
 								}
 
 							}
@@ -84,6 +85,13 @@ public class ToSwift extends Thread {
 
 			} catch (IOException e) {
 				e.printStackTrace();
+			}
+
+			// Close queue
+			try {
+				queue.close();
+			} catch (MQException ex) {
+				ex.printStackTrace();
 			}
 
 			// Close queue connection
@@ -101,7 +109,6 @@ public class ToSwift extends Thread {
 	}
 
 	public static boolean archiveFile(String file) {
-		System.out.println("Archiving file : " + file);
 		File physicalFile = new File(FOLDER_TO_SWIFT + File.separator + file);
 		if (physicalFile.renameTo(new File(ARCHIVE_FOLDER, physicalFile.getName()))) {
 			System.out.println("File " + physicalFile.toString() + " archived in " + ARCHIVE_FOLDER);

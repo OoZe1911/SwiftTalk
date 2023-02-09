@@ -3,6 +3,10 @@ package com.ooze.swifttalk;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.ibm.mq.MQException;
+import com.ibm.mq.MQQueue;
+import com.ooze.manager.MQManager;
+
 public class FromSwift extends Thread {
 	public static String QMGRHOST = null;
 	public static String QMGRNAME=null;
@@ -18,7 +22,8 @@ public class FromSwift extends Thread {
 	}
 
 	public void run() {
-		getMessagesFromSAA();
+		System.out.println("Plouf");
+		//getMessagesFromSAA();
 	}
 
 	public void getMessagesFromSAA() {
@@ -26,6 +31,38 @@ public class FromSwift extends Thread {
 		String[] queue_list_with_potential_duplicates = {REPLY_TO_QUEUE, QUEUE_ACK_SWIFT, QUEUE_FROM_SWIFT};
 		String[] queue_list = removeDuplicates(queue_list_with_potential_duplicates);
 
+		// Scanning queues
+		while(!SwiftTalk.exit) {
+			// Try to connect to MQ
+			MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL);
+
+			boolean message_found = true;
+			while(message_found) {
+				for(int i=0; i < queue_list.length; i++) {
+					// Acquire queue
+					MQQueue queue = queueManager.initConnctionToQueue(queue_list[i]);
+					// Get message
+					queueManager.mqGet(queue);
+					try {
+						queue.close();
+					} catch (MQException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					message_found = false;
+				}
+			}
+
+			// Close queue connection
+			queueManager.closeConnection();
+
+			// Sleeping
+			try {
+				Thread.sleep(1000 * SLEEPING_DURATION);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 
