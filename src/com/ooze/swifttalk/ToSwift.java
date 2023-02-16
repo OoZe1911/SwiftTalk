@@ -67,7 +67,7 @@ public class ToSwift extends Thread {
 		
 										// Put message to queue
 										queueManager.mqPut(queue, content.toString());
-										System.out.println("File : " + file.toString() + " sent to MQ queue " + queue.getResolvedQName() + ".");
+										System.out.println("File : " + file.toString() + " sent to MQ queue " + QUEUE_TO_SWIFT + ".");
 	
 										// Archive file
 										archiveFile(file.getFileName().toString());

@@ -1,5 +1,6 @@
 package com.ooze.manager;
 
+import java.io.IOException;
 import java.util.Hashtable;
 
 import com.ibm.mq.MQException;
@@ -44,10 +45,13 @@ public class MQManager {
 			MQPutMessageOptions pmo = new MQPutMessageOptions();
 			pmo.options = MQConstants.MQPMO_ASYNC_RESPONSE;
 			MQMessage message = new MQMessage();
-			//message.correlationId="TESTFAB".getBytes();
-			message.report = MQConstants.MQRO_PAN & MQConstants.MQRO_NAN;
+			message.report = MQConstants.MQRO_PAN + MQConstants.MQRO_NAN;
 			message.replyToQueueManagerName = ToSwift.QMGRNAME;
 			message.replyToQueueName = ToSwift.REPLY_TO_QUEUE;
+			// CorrelationID
+			String correlationIdValue = "TOTOVAALAPLAGE";
+			byte[] correlationIdBytes = correlationIdValue.getBytes("UTF-8");
+			message.correlationId = correlationIdBytes;
 			message.format = MQConstants.MQFMT_STRING;
 			message.writeString(content);
 			queue.put(message, pmo);
@@ -67,7 +71,18 @@ public class MQManager {
 			System.out.println("DEBUG : messageType = "+ message.messageType);
 			System.out.println("DEBUG : feedback = "+ message.feedback);
 			System.out.println("DEBUG : report = "+ message.report);
-			System.out.println("DEBUG :  correlationId = "+ message.correlationId);
+			System.out.println("DEBUG FAB : " + message.format + " - " + message.putApplicationName + " - " + message.userId);
+			try {
+				byte[] correlationId = message.correlationId;
+				System.out.println("DEBUG : correlationId = "+ new String(correlationId));
+				byte[] contentBytes = new byte[message.getMessageLength()];
+				message.readFully(contentBytes);
+				System.out.println("DEBUG : message = " + new String(contentBytes));
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
 		} catch (MQException e) {
 			if ( (e.completionCode == CMQC.MQCC_FAILED) && (e.reasonCode == CMQC.MQRC_NO_MSG_AVAILABLE) ) {
 				System.out.println("No message in queue " + queue.getResolvedQName());

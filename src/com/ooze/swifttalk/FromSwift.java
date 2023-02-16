@@ -22,8 +22,7 @@ public class FromSwift extends Thread {
 	}
 
 	public void run() {
-		System.out.println("Plouf");
-		//getMessagesFromSAA();
+		getMessagesFromSAA();
 	}
 
 	public void getMessagesFromSAA() {
