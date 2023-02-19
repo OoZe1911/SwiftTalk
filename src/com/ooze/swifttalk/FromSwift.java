@@ -1,5 +1,6 @@
 package com.ooze.swifttalk;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,7 +27,7 @@ public class FromSwift extends Thread {
 	}
 
 	public void getMessagesFromSAA() {
-		// Compute queues to aqcuire
+		// Compute queues to acquire
 		String[] queue_list_with_potential_duplicates = {REPLY_TO_QUEUE, QUEUE_ACK_SWIFT, QUEUE_FROM_SWIFT};
 		String[] queue_list = removeDuplicates(queue_list_with_potential_duplicates);
 
@@ -35,23 +36,37 @@ public class FromSwift extends Thread {
 			// Try to connect to MQ
 			MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL);
 
+			// Open all queues
+			ArrayList<MQQueue> queue_connexions = new ArrayList<MQQueue>();
+			for(int i=0; i < queue_list.length; i++) {
+				queue_connexions.add(queueManager.initConnctionToQueue(queue_list[i]));
+			}
+
+			// Read messages in queues
 			boolean message_found = true;
 			while(message_found) {
-				for(int i=0; i < queue_list.length; i++) {
-					// Acquire queue
-					MQQueue queue = queueManager.initConnctionToQueue(queue_list[i]);
+
+				message_found = false;
+
+				for(int i=0; i < queue_connexions.size(); i++) {
+
 					// Get message
-					queueManager.mqGet(queue);
-					try {
-						queue.close();
-					} catch (MQException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					String messageContent = queueManager.mqGet(queue_connexions.get(i));
+					if (messageContent != null) {
+							message_found = true;
 					}
-					message_found = false;
 				}
 			}
 
+			// Close all queues
+			try {
+				for(int i=0; i < queue_connexions.size(); i++) {
+					queue_connexions.get(i).close();
+				}
+			} catch (MQException e) {
+				e.printStackTrace();
+			}
+			
 			// Close queue connection
 			queueManager.closeConnection();
 

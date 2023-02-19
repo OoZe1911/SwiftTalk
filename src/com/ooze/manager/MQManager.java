@@ -61,11 +61,12 @@ public class MQManager {
 	}
 
 	public String mqGet(MQQueue queue) {
+		String messageContent = null;
 		MQMessage message = new MQMessage();
 		MQGetMessageOptions gmo = new MQGetMessageOptions();
 		gmo.options = CMQC.MQGMO_WAIT + CMQC.MQGMO_FAIL_IF_QUIESCING;
-		// Wait 2 seconds
-		gmo.waitInterval = 2000;
+		// Wait 1 seconds
+		gmo.waitInterval = 1000;
 		try {
 			queue.get(message, gmo);
 			System.out.println("DEBUG : messageType = "+ message.messageType);
@@ -77,7 +78,8 @@ public class MQManager {
 				System.out.println("DEBUG : correlationId = "+ new String(correlationId));
 				byte[] contentBytes = new byte[message.getMessageLength()];
 				message.readFully(contentBytes);
-				System.out.println("DEBUG : message = " + new String(contentBytes));
+				messageContent = new String(contentBytes);
+				System.out.println("DEBUG : message = " + messageContent);
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -92,7 +94,7 @@ public class MQManager {
 			}
 		}
 
-		return null;
+		return messageContent;
 	}
 
 	public void closeConnection() {
