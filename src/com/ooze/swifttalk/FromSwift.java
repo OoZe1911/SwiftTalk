@@ -1,10 +1,12 @@
 package com.ooze.swifttalk;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.ibm.mq.MQException;
+import com.ibm.mq.MQMessage;
 import com.ibm.mq.MQQueue;
 import com.ooze.manager.MQManager;
 
@@ -51,9 +53,56 @@ public class FromSwift extends Thread {
 				for(int i=0; i < queue_connexions.size(); i++) {
 
 					// Get message
-					String messageContent = queueManager.mqGet(queue_connexions.get(i));
-					if (messageContent != null) {
-							message_found = true;
+					MQMessage message = queueManager.mqGet(queue_connexions.get(i));
+					if (message != null) {
+						message_found = true;
+
+						// Process message
+						// messageType = 4 + feedback = 275 = PAN
+						// messageType = 4 + feedback = 65537 = NAN
+						// messageType = 8 + feedback = 0 = SWIFT Message
+
+						// PAN SAA XML v2 sample :
+						// <?xml version="1.0" encoding="UTF-8" ?><Saa:DataPDU xmlns:Saa="urn:swift:saa:xsd:saa.2.0" xmlns:Sw="urn:swift:snl:ns.Sw" xmlns:SwInt="urn:swift:snl:ns.SwInt" xmlns:SwGbl="urn:swift:snl:ns.SwGbl" xmlns:SwSec="urn:swift:snl:ns.SwSec"><Saa:Revision>2.0.8</Saa:Revision><Saa:Header><Saa:MessageStatus><Saa:SenderReference>IMGTCBEBEECL299CANCELLATION1$2301102</Saa:SenderReference><Saa:SeqNr>000061</Saa:SeqNr><Saa:IsSuccess>true</Saa:IsSuccess></Saa:MessageStatus></Saa:Header></Saa:DataPDU>
+						// NAN SAA XML v2 sample :
+						// <?xml version="1.0" encoding="UTF-8" ?><Saa:DataPDU xmlns:Saa="urn:swift:saa:xsd:saa.2.0" xmlns:Sw="urn:swift:snl:ns.Sw" xmlns:SwInt="urn:swift:snl:ns.SwInt" xmlns:SwGbl="urn:swift:snl:ns.SwGbl" xmlns:SwSec="urn:swift:snl:ns.SwSec"><Saa:Revision>2.0.8</Saa:Revision><Saa:Header><Saa:MessageStatus><Saa:SenderReference>IMGTCBEBEECL299CANCELLATION1$2301102</Saa:SenderReference><Saa:SeqNr>000062</Saa:SeqNr><Saa:IsSuccess>false</Saa:IsSuccess><Saa:ErrorCode>EFORMAT</Saa:ErrorCode><Saa:ErrorText>Message text format error</Saa:ErrorText></Saa:MessageStatus></Saa:Header></Saa:DataPDU>
+
+						// Get message content
+						byte[] contentBytes;
+						String messageContent = null;
+						try {
+							contentBytes = new byte[message.getMessageLength()];
+							message.readFully(contentBytes);
+							messageContent = new String(contentBytes);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+	
+						String messageReference = null;
+						if(messageContent !=null && messageContent.indexOf("<Saa:SenderReference>") != -1) {
+							messageReference = messageContent.substring(messageContent.indexOf("<Saa:SenderReference>") + 21,messageContent.indexOf("</Saa:SenderReference>"));
+						} else {
+							messageReference = "Unknown";
+						}
+	
+						// Feedback
+						if(message.messageType == 4) {
+							// PAN
+							if(message.feedback == 275) {
+								System.out.println("PAN Received for message reference = " + messageReference);
+							} else {
+								if(message.feedback == 65537) {
+									System.out.println("NAN Received for message reference = " + messageReference);	
+								}
+							}
+
+						} else {
+							// Message
+							if(message.messageType == 8 && messageContent != null) {
+								System.out.println("SWIFT message received = " + messageContent);
+							}
+						}
+
 					}
 				}
 			}

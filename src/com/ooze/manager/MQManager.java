@@ -1,6 +1,5 @@
 package com.ooze.manager;
 
-import java.io.IOException;
 import java.util.Hashtable;
 
 import com.ibm.mq.MQException;
@@ -60,15 +59,16 @@ public class MQManager {
 		}
 	}
 
-	public String mqGet(MQQueue queue) {
-		String messageContent = null;
+	public MQMessage mqGet(MQQueue queue) {
 		MQMessage message = new MQMessage();
 		MQGetMessageOptions gmo = new MQGetMessageOptions();
 		gmo.options = CMQC.MQGMO_WAIT + CMQC.MQGMO_FAIL_IF_QUIESCING;
-		// Wait 1 seconds
-		gmo.waitInterval = 1000;
+		// Wait 200 ms
+		gmo.waitInterval = 200;
 		try {
 			queue.get(message, gmo);
+			/* DEBUG
+			String messageContent = null;
 			System.out.println("DEBUG : messageType = "+ message.messageType);
 			System.out.println("DEBUG : feedback = "+ message.feedback);
 			System.out.println("DEBUG : report = "+ message.report);
@@ -84,17 +84,28 @@ public class MQManager {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-
+			 */
 		} catch (MQException e) {
+			/* DEBUG
 			if ( (e.completionCode == CMQC.MQCC_FAILED) && (e.reasonCode == CMQC.MQRC_NO_MSG_AVAILABLE) ) {
 				System.out.println("No message in queue " + queue.getResolvedQName());
+				return null;
 			} else  {
 				System.out.println("MQException: " + e.getLocalizedMessage());
 				System.out.println("CC=" + e.completionCode + " : RC=" + e.reasonCode);
+				return null;
+			}
+			*/
+			if ( (e.completionCode != CMQC.MQCC_FAILED) || (e.reasonCode != CMQC.MQRC_NO_MSG_AVAILABLE) ) {
+				System.out.println("MQException: " + e.getLocalizedMessage());
+				System.out.println("CC=" + e.completionCode + " : RC=" + e.reasonCode);
+				return null;				
+			} else {
+				return null;
 			}
 		}
 
-		return messageContent;
+		return message;
 	}
 
 	public void closeConnection() {
