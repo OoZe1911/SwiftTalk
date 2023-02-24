@@ -1,5 +1,6 @@
 package com.ooze.swifttalk;
 
+
 import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
@@ -122,8 +123,16 @@ public class SwiftTalk {
 		// TEST LAU
 		try {
 			String file_content = FileUtils.readFile("MT299_WITHOUTLAU.xml");
+			// Digest
 			String XML_canonised = SwiftUtils.XMLcanonisation(file_content);
-			System.out.println(FileUtils.calculateHash(XML_canonised));
+			String digest = FileUtils.calculateHash(XML_canonised);
+			System.out.println("DIGEST : " + digest);
+			// Signature
+			String signedInfo = "<ds:Signature xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm=\"http://www.w3.org/2001/10/xml-exc-c14n#\"></ds:CanonicalizationMethod><ds:SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#hmac-sha256\"></ds:SignatureMethod><ds:Reference URI=\"\"><ds:Transforms><ds:Transform Algorithm=\"http://www.w3.org/2000/09/xmldsig#enveloped-signature\"></ds:Transform><ds:Transform Algorithm=\"http://www.w3.org/2001/10/xml-exc-c14n#\"></ds:Transform></ds:Transforms><ds:DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"></ds:DigestMethod><ds:DigestValue>";
+			signedInfo = signedInfo + digest + "</ds:DigestValue></ds:Reference></ds:SignedInfo></ds:Signature>";
+			XML_canonised = SwiftUtils.XMLcanonisation(signedInfo);
+			System.out.println(XML_canonised);
+			System.out.println("SIGNATURE : " + SwiftUtils.calculateHmacSha256("w8M?5v8L6VTdv@8nJ3Gm^9L-_pDFsFJB", XML_canonised));
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
