@@ -15,9 +15,19 @@ import java.util.Properties;
 public class FileUtils {
 
 	// Read plain text file
-	public static String readFile(String path) throws IOException  {
-		byte[] encoded = Files.readAllBytes(Paths.get(path));
-		return new String(encoded, StandardCharsets.UTF_8);
+	public static String readFile(String path) {
+		if(fileExists(path)) {
+			byte[] encoded;
+			try {
+				encoded = Files.readAllBytes(Paths.get(path));
+				return new String(encoded, StandardCharsets.UTF_8);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		} else {
+			return null;
+		}
 	}
 
 	// Read external properties file
@@ -38,6 +48,8 @@ public class FileUtils {
 			return false;
 		}
 	}
+
+	// Check if file is locked
 	public static boolean isFileLocked(File file) {
 		try {
 			if (System.getProperty("os.name").indexOf("Windows") == -1) {
@@ -71,7 +83,8 @@ public class FileUtils {
 			return true;
 		} 
 	}
-	
+
+	// Return SHA256 encoded in base64
 	public static String calculateHash(String content) {
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -82,4 +95,5 @@ public class FileUtils {
 			return null;
 		} 
 	}
+
 }

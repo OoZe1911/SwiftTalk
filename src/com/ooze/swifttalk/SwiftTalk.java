@@ -7,6 +7,7 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 import com.ooze.utils.FileUtils;
+import com.ooze.utils.SwiftUtils;
 
 public class SwiftTalk {
 	// Token to quit SwiftTalk
@@ -108,12 +109,24 @@ public class SwiftTalk {
 		FromSwift.QUEUE_FROM_SWIFT = conf.getProperty("QUEUE_FROM_SWIFT");
 		System.out.println("QUEUE_FROM_SWIFT = " + FromSwift.QUEUE_FROM_SWIFT);
 
+		SwiftUtils.LAU = conf.getProperty("LAU");
+		System.out.println("LAU = " + SwiftUtils.LAU);
+		
 		ToSwift.SLEEPING_DURATION = Integer.parseInt(conf.getProperty("SLEEPING_DURATION"));
 		FromSwift.SLEEPING_DURATION = ToSwift.SLEEPING_DURATION;
 		System.out.println("SLEEPING_DURATION = " + ToSwift.SLEEPING_DURATION);
 
-		System.out.println("SwiftTalk is ready for business.");
 		System.out.println("-------------------------------------------------");
+		System.out.println("SwiftTalk is ready for business.");
+
+		// TEST LAU
+		try {
+			String file_content = FileUtils.readFile("MT299_WITHOUTLAU.xml");
+			String XML_canonised = SwiftUtils.XMLcanonisation(file_content);
+			System.out.println(FileUtils.calculateHash(XML_canonised));
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 
 		// Running thread in charge of sending messages to SAA
 		thread_to_swift = new ToSwift();
