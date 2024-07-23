@@ -16,12 +16,16 @@ public class MQManager {
 
 	public MQQueueManager qMgr = null;
 
-	public MQManager(String hostname, String qmgrname, int port, String channel) {
+	public MQManager(String hostname, String qmgrname, int port, String channel, String cypher, String sslPeer) {
 		super();
 		Hashtable<String, Object> props = new Hashtable<String, Object>();
 		props.put(MQConstants.HOST_NAME_PROPERTY, hostname);
 		props.put(MQConstants.CHANNEL_PROPERTY, channel);
 		props.put(MQConstants.PORT_PROPERTY, port);
+		if(cypher != null && cypher.length() > 0)
+			props.put(MQConstants.SSL_CIPHER_SUITE_PROPERTY, cypher);
+		if(sslPeer!= null && sslPeer.length() > 0)
+			props.put(MQConstants.SSL_PEER_NAME_PROPERTY, sslPeer);
 		try {
 			qMgr = new MQQueueManager(qmgrname, props);
 		} catch (MQException e) {

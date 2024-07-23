@@ -1,6 +1,5 @@
 package com.ooze.swifttalk;
 
-
 import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
@@ -8,7 +7,6 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 import com.ooze.utils.FileUtils;
-import com.ooze.utils.SwiftUtils;
 
 public class SwiftTalk {
 	// Token to quit SwiftTalk
@@ -17,15 +15,9 @@ public class SwiftTalk {
 	public static Thread thread_from_swift = null;
 
 	public static void main(String[] args) {
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run() {
-				SwiftTalk.handleJVMShutdown();
-			}
-		});
-
-		System.out.println("-------------------------------------------------");
-		System.out.println("SwiftTalk v0.1 is starting - (c) 2023 / TALAN SAS");
-		System.out.println("-------------------------------------------------");
+		System.out.println("---------------------------");
+		System.out.println("SwiftTalk v0.1 is starting ");
+		System.out.println("---------------------------");
 
 		// Reading configuration file
 		Properties conf = null;
@@ -110,8 +102,36 @@ public class SwiftTalk {
 		FromSwift.QUEUE_FROM_SWIFT = conf.getProperty("QUEUE_FROM_SWIFT");
 		System.out.println("QUEUE_FROM_SWIFT = " + FromSwift.QUEUE_FROM_SWIFT);
 
-		SwiftUtils.LAU = conf.getProperty("LAU");
-		System.out.println("LAU = " + SwiftUtils.LAU);
+		// MQ TLS
+		String CYPHER = conf.getProperty("CYPHER");
+		System.out.println("CYPHER = " + CYPHER);
+
+		String TRUSTSORE = conf.getProperty("TRUSTSORE");
+		System.out.println("TRUSTSORE = " + TRUSTSORE);
+		if (TRUSTSORE != null && TRUSTSORE.length() > 0)
+			System.setProperty("javax.net.ssl.keyStore", TRUSTSORE);
+
+		String TRUSTSORE_PASSWORD = conf.getProperty("TRUSTSORE_PASSWORD");
+		System.out.println("TRUSTSORE_PASSWORD = " + TRUSTSORE_PASSWORD);
+		if (TRUSTSORE_PASSWORD != null && TRUSTSORE_PASSWORD.length() > 0)
+			System.setProperty("javax.net.ssl.keyStorePassword", TRUSTSORE_PASSWORD);
+
+		String KEYSTORE = conf.getProperty("KEYSTORE");
+		System.out.println("KEYSTORE = " + KEYSTORE);
+		if (KEYSTORE != null && KEYSTORE.length() > 0)
+			System.setProperty("javax.net.ssl.trustStore", KEYSTORE);
+
+		String KEYSTORE_PASSWORD = conf.getProperty("KEYSTORE_PASSWORD");
+		System.out.println("KEYSTORE_PASSWORD = " + KEYSTORE_PASSWORD);
+		if (KEYSTORE_PASSWORD != null && KEYSTORE_PASSWORD.length() > 0)
+			System.setProperty("javax.net.ssl.trustStorePassword", KEYSTORE_PASSWORD);
+
+		String SSLPEER = conf.getProperty("SSLPEER");
+		System.out.println("SSLPEER = " + SSLPEER);
+
+		// LAU (Empty, HMAC, AES)
+		System.out.println("LAU_TYPE = " + conf.getProperty("LAU_TYPE"));
+		System.out.println("LAU = " + conf.getProperty("LAU"));
 		
 		ToSwift.SLEEPING_DURATION = Integer.parseInt(conf.getProperty("SLEEPING_DURATION"));
 		FromSwift.SLEEPING_DURATION = ToSwift.SLEEPING_DURATION;
@@ -120,37 +140,41 @@ public class SwiftTalk {
 		System.out.println("-------------------------------------------------");
 		System.out.println("SwiftTalk is ready for business.");
 
-		// TEST LAU
-		try {
-			String file_content = FileUtils.readFile("MT299_WITHOUTLAU.xml");
-			// Digest
-			String XML_canonised = SwiftUtils.XMLcanonisation(file_content);
-			String digest = FileUtils.calculateHash(XML_canonised);
-			System.out.println("DIGEST : " + digest);
-			// Signature
-			String signedInfo = "<ds:Signature xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm=\"http://www.w3.org/2001/10/xml-exc-c14n#\"></ds:CanonicalizationMethod><ds:SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#hmac-sha256\"></ds:SignatureMethod><ds:Reference URI=\"\"><ds:Transforms><ds:Transform Algorithm=\"http://www.w3.org/2000/09/xmldsig#enveloped-signature\"></ds:Transform><ds:Transform Algorithm=\"http://www.w3.org/2001/10/xml-exc-c14n#\"></ds:Transform></ds:Transforms><ds:DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\"></ds:DigestMethod><ds:DigestValue>";
-			signedInfo = signedInfo + digest + "</ds:DigestValue></ds:Reference></ds:SignedInfo></ds:Signature>";
-			XML_canonised = SwiftUtils.XMLcanonisation(signedInfo);
-			System.out.println(XML_canonised);
-			System.out.println("SIGNATURE : " + SwiftUtils.calculateHmacSha256("w8M?5v8L6VTdv@8nJ3Gm^9L-_pDFsFJB", XML_canonised));
-		} catch (Exception e1) {
-			e1.printStackTrace();
+		// Running thread in charge of sending messages to SAA
+		if (ToSwift.QUEUE_TO_SWIFT != null && ToSwift.QUEUE_TO_SWIFT.trim().length() > 0) {
+			System.out.println("-> Starting sending thread");
+			thread_to_swift = new ToSwift();
+			thread_to_swift.start();
 		}
 
-		// Running thread in charge of sending messages to SAA
-		thread_to_swift = new ToSwift();
-		thread_to_swift.start();
-
 		// Running thread in charge of receiving messages from SAA
-		thread_from_swift = new FromSwift();
-		thread_from_swift.start();
-
+		if(FromSwift.QUEUE_FROM_SWIFT != null && FromSwift.QUEUE_FROM_SWIFT.trim().length() > 0) {
+			System.out.println("-> Starting receiving thread");
+			thread_from_swift = new FromSwift();
+			thread_from_swift.start();
+		}
 		
 		// Wait in infinite loop
-		//Thread currentThread = Thread.currentThread();
+		final Object lock = new Object();
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				synchronized (lock) {
+					lock.notify();
+					SwiftTalk.handleJVMShutdown();
+				}
+			}
+		});
+
 		try {
-			thread_to_swift.join();
-			//currentThread.join();
+			if (thread_to_swift != null) {
+				thread_to_swift.join();
+			}
+			if (thread_from_swift != null) {
+				thread_from_swift.join();
+			}
+			synchronized (lock) {
+				lock.wait();
+			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -159,7 +183,8 @@ public class SwiftTalk {
 	public static void handleJVMShutdown() {
 		System.out.println("Trying to stop SwiftTalk...");
 		exit=true;
-		while (thread_to_swift.isAlive() && thread_from_swift.isAlive()) {
+		while ((thread_to_swift != null && thread_to_swift.isAlive()) || 
+				   (thread_from_swift != null && thread_from_swift.isAlive())) {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {

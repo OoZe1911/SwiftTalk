@@ -40,7 +40,7 @@ public class ToSwift extends Thread {
 
 		while(!SwiftTalk.exit) {
 			// Try to connect to MQ
-			MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL);
+			MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL, null, null);
 
 			// Initialize queue connection
 			MQQueue queue = queueManager.initConnctionToQueue(QUEUE_TO_SWIFT);

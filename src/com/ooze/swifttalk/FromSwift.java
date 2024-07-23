@@ -36,7 +36,7 @@ public class FromSwift extends Thread {
 		// Scanning queues
 		while(!SwiftTalk.exit) {
 			// Try to connect to MQ
-			MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL);
+			MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL, null, null);
 
 			// Open all queues
 			ArrayList<MQQueue> queue_connexions = new ArrayList<MQQueue>();
@@ -129,12 +129,14 @@ public class FromSwift extends Thread {
 	}
 
 
-	public static String[] removeDuplicates(String[] array) {
-		Set<String> set = new HashSet<>();
-		for (String s : array) {
-			set.add(s);
-		}
-		return set.toArray(new String[0]);
-	}
+    public static String[] removeDuplicates(String[] array) {
+        Set<String> set = new HashSet<>();
+        for (String s : array) {
+            if (s != null) {
+                set.add(s);
+            }
+        }
+        return set.toArray(new String[0]);
+    }
 
 }
