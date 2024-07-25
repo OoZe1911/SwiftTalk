@@ -8,20 +8,15 @@ import java.util.Set;
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQMessage;
 import com.ibm.mq.MQQueue;
+import com.ooze.bean.ConnectionParams;
 import com.ooze.manager.MQManager;
 
 public class FromSwift extends Thread {
-	public static String QMGRHOST = null;
-	public static String QMGRNAME=null;
-	public static int QMGRPORT=1414;
-	public static String CHANNEL=null;
-	public static String REPLY_TO_QUEUE=null;
-	public static String QUEUE_ACK_SWIFT=null;
-	public static String QUEUE_FROM_SWIFT=null;
-	public static int SLEEPING_DURATION=10;
+	private ConnectionParams connectionParams;
 
-	public FromSwift() {
+	public FromSwift(ConnectionParams connectionParams) {
 		super();
+		this.connectionParams = connectionParams;
 	}
 
 	public void run() {
@@ -30,13 +25,13 @@ public class FromSwift extends Thread {
 
 	public void getMessagesFromSAA() {
 		// Compute queues to acquire
-		String[] queue_list_with_potential_duplicates = {REPLY_TO_QUEUE, QUEUE_ACK_SWIFT, QUEUE_FROM_SWIFT};
+		String[] queue_list_with_potential_duplicates = {connectionParams.getReplyToQueue(), connectionParams.getQueueAckSwift(), connectionParams.getQueueFromSwift()};
 		String[] queue_list = removeDuplicates(queue_list_with_potential_duplicates);
 
 		// Scanning queues
 		while(!SwiftTalk.exit) {
 			// Try to connect to MQ
-			MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL, null, null);
+			MQManager queueManager = new MQManager(connectionParams.getQmgrHost(), connectionParams.getQmgrName(), connectionParams.getQmgrPort(), connectionParams.getChannel(), connectionParams.getCypher(), connectionParams.getSslPeer());
 
 			// Open all queues
 			ArrayList<MQQueue> queue_connexions = new ArrayList<MQQueue>();
@@ -121,7 +116,7 @@ public class FromSwift extends Thread {
 
 			// Sleeping
 			try {
-				Thread.sleep(1000 * SLEEPING_DURATION);
+				Thread.sleep(1000 * connectionParams.getSleepingDuration());
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

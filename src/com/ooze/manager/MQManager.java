@@ -10,7 +10,7 @@ import com.ibm.mq.MQQueue;
 import com.ibm.mq.MQQueueManager;
 import com.ibm.mq.constants.CMQC;
 import com.ibm.mq.constants.MQConstants;
-import com.ooze.swifttalk.ToSwift;
+import com.ooze.bean.ConnectionParams;
 
 public class MQManager {
 
@@ -43,16 +43,16 @@ public class MQManager {
 		}
 	}
 
-	public void mqPut(MQQueue queue, String content) {
+	public void mqPut(MQQueue queue, String content, ConnectionParams connectionParams) {
 		try {
 			MQPutMessageOptions pmo = new MQPutMessageOptions();
 			pmo.options = MQConstants.MQPMO_ASYNC_RESPONSE;
 			MQMessage message = new MQMessage();
 			message.report = MQConstants.MQRO_PAN + MQConstants.MQRO_NAN;
-			message.replyToQueueManagerName = ToSwift.QMGRNAME;
-			message.replyToQueueName = ToSwift.REPLY_TO_QUEUE;
+			message.replyToQueueManagerName = connectionParams.getQmgrName();
+			message.replyToQueueName = connectionParams.getReplyToQueue();
 			// CorrelationID
-			String correlationIdValue = "TOTOVAALAPLAGE";
+			String correlationIdValue = "CORRELATIONID";
 			byte[] correlationIdBytes = correlationIdValue.getBytes("UTF-8");
 			message.correlationId = correlationIdBytes;
 			message.format = MQConstants.MQFMT_STRING;

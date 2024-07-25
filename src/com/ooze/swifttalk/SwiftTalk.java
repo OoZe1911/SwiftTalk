@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.TimeZone;
 
+import com.ooze.bean.ConnectionParams;
 import com.ooze.utils.FileUtils;
 
 public class SwiftTalk {
@@ -73,84 +74,81 @@ public class SwiftTalk {
 		}
 		System.out.println("--- " + nb + " old files deleted.");
 
-		ToSwift.QMGRHOST = conf.getProperty("QMGRHOST");
-		FromSwift.QMGRHOST = ToSwift.QMGRHOST;
-		System.out.println("QMGRHOST = " + ToSwift.QMGRHOST);
+		ConnectionParams connectionParams = new ConnectionParams();
+		connectionParams.setQmgrHost(conf.getProperty("QMGRHOST"));
+		System.out.println("QMGRHOST = " + connectionParams.getQmgrHost());
 
-		ToSwift.QMGRNAME = conf.getProperty("QMGRNAME");
-		FromSwift.QMGRNAME = ToSwift.QMGRNAME;
-		System.out.println("QMGRNAME = " + ToSwift.QMGRNAME);
+		connectionParams.setQmgrName(conf.getProperty("QMGRNAME"));
+		System.out.println("QMGRNAME = " + connectionParams.getQmgrName());
 
-		ToSwift.QMGRPORT = Integer.parseInt(conf.getProperty("QMGRPORT"));
-		FromSwift.QMGRPORT = ToSwift.QMGRPORT;
-		System.out.println("QMGRPORT = " + ToSwift.QMGRPORT);
+		connectionParams.setQmgrPort(Integer.parseInt(conf.getProperty("QMGRPORT")));
+		System.out.println("QMGRPORT = " + connectionParams.getQmgrPort());
 
-		ToSwift.CHANNEL = conf.getProperty("CHANNEL");
-		FromSwift.CHANNEL = ToSwift.CHANNEL;
-		System.out.println("CHANNEL = " + ToSwift.CHANNEL);
+		connectionParams.setChannel(conf.getProperty("CHANNEL"));
+		System.out.println("CHANNEL = " + connectionParams.getChannel());
 
-		ToSwift.QUEUE_TO_SWIFT = conf.getProperty("QUEUE_TO_SWIFT");
-		System.out.println("QUEUE_TO_SWIFT = " + ToSwift.QUEUE_TO_SWIFT);
+		connectionParams.setQueueToSwift(conf.getProperty("QUEUE_TO_SWIFT"));
+		System.out.println("QUEUE_TO_SWIFT = " + connectionParams.getQueueToSwift());
 
-		ToSwift.REPLY_TO_QUEUE = conf.getProperty("REPLY_TO_QUEUE");
-		FromSwift.REPLY_TO_QUEUE = ToSwift.REPLY_TO_QUEUE;
-		System.out.println("REPLY_TO_QUEUE = " + ToSwift.REPLY_TO_QUEUE);
+		connectionParams.setReplyToQueue(conf.getProperty("REPLY_TO_QUEUE"));
+		System.out.println("REPLY_TO_QUEUE = " + connectionParams.getReplyToQueue());
 
-		FromSwift.QUEUE_ACK_SWIFT = conf.getProperty("QUEUE_ACK_SWIFT");
-		System.out.println("QUEUE_ACK_SWIFT = " + FromSwift.QUEUE_ACK_SWIFT);
+		connectionParams.setQueueAckSwift(conf.getProperty("QUEUE_ACK_SWIFT"));
+		System.out.println("QUEUE_ACK_SWIFT = " + connectionParams.getQueueAckSwift());
 
-		FromSwift.QUEUE_FROM_SWIFT = conf.getProperty("QUEUE_FROM_SWIFT");
-		System.out.println("QUEUE_FROM_SWIFT = " + FromSwift.QUEUE_FROM_SWIFT);
+		connectionParams.setQueueFromSwift(conf.getProperty("QUEUE_FROM_SWIFT"));
+		System.out.println("QUEUE_FROM_SWIFT = " + connectionParams.getQueueFromSwift());
 
 		// MQ TLS
-		String CYPHER = conf.getProperty("CYPHER");
-		System.out.println("CYPHER = " + CYPHER);
+		connectionParams.setCypher(conf.getProperty("CYPHER"));
+		System.out.println("CYPHER = " + connectionParams.getCypher());
 
-		String TRUSTSORE = conf.getProperty("TRUSTSORE");
-		System.out.println("TRUSTSORE = " + TRUSTSORE);
-		if (TRUSTSORE != null && TRUSTSORE.length() > 0)
-			System.setProperty("javax.net.ssl.keyStore", TRUSTSORE);
+		connectionParams.setTrustStore(conf.getProperty("TRUSTSORE"));
+		System.out.println("TRUSTSORE = " + connectionParams.getTrustStore());
+		if (connectionParams.getTrustStore() != null && connectionParams.getTrustStore().length() > 0)
+			System.setProperty("javax.net.ssl.trustStore", connectionParams.getTrustStore());
 
-		String TRUSTSORE_PASSWORD = conf.getProperty("TRUSTSORE_PASSWORD");
-		System.out.println("TRUSTSORE_PASSWORD = " + TRUSTSORE_PASSWORD);
-		if (TRUSTSORE_PASSWORD != null && TRUSTSORE_PASSWORD.length() > 0)
-			System.setProperty("javax.net.ssl.keyStorePassword", TRUSTSORE_PASSWORD);
+		connectionParams.setTrustStorePassword(conf.getProperty("TRUSTSORE_PASSWORD"));
+		System.out.println("TRUSTSORE_PASSWORD = " + connectionParams.getTrustStorePassword());
+		if (connectionParams.getTrustStorePassword() != null && connectionParams.getTrustStorePassword().length() > 0)
+			System.setProperty("javax.net.ssl.trustStorePassword", connectionParams.getTrustStorePassword());
 
-		String KEYSTORE = conf.getProperty("KEYSTORE");
-		System.out.println("KEYSTORE = " + KEYSTORE);
-		if (KEYSTORE != null && KEYSTORE.length() > 0)
-			System.setProperty("javax.net.ssl.trustStore", KEYSTORE);
+		connectionParams.setKeyStore(conf.getProperty("KEYSTORE"));
+		System.out.println("KEYSTORE = " + connectionParams.getKeyStore());
+		if (connectionParams.getKeyStore() != null && connectionParams.getKeyStore().length() > 0)
+			System.setProperty("javax.net.ssl.keyStore", connectionParams.getKeyStore());
 
-		String KEYSTORE_PASSWORD = conf.getProperty("KEYSTORE_PASSWORD");
-		System.out.println("KEYSTORE_PASSWORD = " + KEYSTORE_PASSWORD);
-		if (KEYSTORE_PASSWORD != null && KEYSTORE_PASSWORD.length() > 0)
-			System.setProperty("javax.net.ssl.trustStorePassword", KEYSTORE_PASSWORD);
+		connectionParams.setKeyStorePassword(conf.getProperty("KEYSTORE_PASSWORD"));
+		System.out.println("KEYSTORE_PASSWORD = " + connectionParams.getKeyStorePassword());
+		if (connectionParams.getKeyStorePassword() != null && connectionParams.getKeyStorePassword().length() > 0)
+			System.setProperty("javax.net.ssl.keyStorePassword", connectionParams.getKeyStorePassword());
 
-		String SSLPEER = conf.getProperty("SSLPEER");
-		System.out.println("SSLPEER = " + SSLPEER);
+		connectionParams.setSslPeer(conf.getProperty("SSLPEER"));
+		System.out.println("SSLPEER = " + connectionParams.getSslPeer());
 
 		// LAU (Empty, HMAC, AES)
-		System.out.println("LAU_TYPE = " + conf.getProperty("LAU_TYPE"));
-		System.out.println("LAU = " + conf.getProperty("LAU"));
-		
-		ToSwift.SLEEPING_DURATION = Integer.parseInt(conf.getProperty("SLEEPING_DURATION"));
-		FromSwift.SLEEPING_DURATION = ToSwift.SLEEPING_DURATION;
-		System.out.println("SLEEPING_DURATION = " + ToSwift.SLEEPING_DURATION);
+		connectionParams.setLauType(conf.getProperty("LAU_TYPE"));
+		System.out.println("LAU_TYPE = " + connectionParams.getLauType());
+		connectionParams.setLauKey(conf.getProperty("LAU_KEY"));
+		System.out.println("LAU_KEY = " + conf.getProperty("LAU_KEY"));
+
+		connectionParams.setSleepingDuration(Integer.parseInt(conf.getProperty("SLEEPING_DURATION")));
+		System.out.println("SLEEPING_DURATION = " + connectionParams.getSleepingDuration());
 
 		System.out.println("-------------------------------------------------");
 		System.out.println("SwiftTalk is ready for business.");
 
 		// Running thread in charge of sending messages to SAA
-		if (ToSwift.QUEUE_TO_SWIFT != null && ToSwift.QUEUE_TO_SWIFT.trim().length() > 0) {
+		if (connectionParams.getQueueToSwift() != null && connectionParams.getQueueToSwift().trim().length() > 0) {
 			System.out.println("-> Starting sending thread");
-			thread_to_swift = new ToSwift();
+			thread_to_swift = new ToSwift(connectionParams);
 			thread_to_swift.start();
 		}
 
 		// Running thread in charge of receiving messages from SAA
-		if(FromSwift.QUEUE_FROM_SWIFT != null && FromSwift.QUEUE_FROM_SWIFT.trim().length() > 0) {
+		if(connectionParams.getQueueFromSwift() != null && connectionParams.getQueueFromSwift().trim().length() > 0) {
 			System.out.println("-> Starting receiving thread");
-			thread_from_swift = new FromSwift();
+			thread_from_swift = new FromSwift(connectionParams);
 			thread_from_swift.start();
 		}
 		

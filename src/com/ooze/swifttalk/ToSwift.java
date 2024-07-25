@@ -14,22 +14,18 @@ import java.util.stream.Stream;
 
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQQueue;
+import com.ooze.bean.ConnectionParams;
 import com.ooze.manager.MQManager;
 import com.ooze.utils.FileUtils;
 
 public class ToSwift extends Thread {
+	private ConnectionParams connectionParams;
 	public static String FOLDER_TO_SWIFT = null;
 	public static String ARCHIVE_FOLDER = null;
-	public static String QMGRHOST = null;
-	public static String QMGRNAME=null;
-	public static int QMGRPORT=1414;
-	public static String CHANNEL=null;
-	public static String QUEUE_TO_SWIFT=null;
-	public static String REPLY_TO_QUEUE=null;
-	public static int SLEEPING_DURATION=10;
 
-	public ToSwift() {
+	public ToSwift(ConnectionParams connectionParams) {
 		super();
+		this.connectionParams = connectionParams;
 	}
 
 	public void run() {
@@ -40,10 +36,10 @@ public class ToSwift extends Thread {
 
 		while(!SwiftTalk.exit) {
 			// Try to connect to MQ
-			MQManager queueManager = new MQManager(QMGRHOST, QMGRNAME, QMGRPORT, CHANNEL, null, null);
+			MQManager queueManager = new MQManager(connectionParams.getQmgrHost(), connectionParams.getQmgrName(), connectionParams.getQmgrPort(), connectionParams.getChannel(), connectionParams.getCypher(), connectionParams.getSslPeer());
 
 			// Initialize queue connection
-			MQQueue queue = queueManager.initConnctionToQueue(QUEUE_TO_SWIFT);
+			MQQueue queue = queueManager.initConnctionToQueue(connectionParams.getQueueToSwift());
 
 			// Scanning folder
 			Path directory = Paths.get(FOLDER_TO_SWIFT);
@@ -66,8 +62,8 @@ public class ToSwift extends Thread {
 										}
 		
 										// Put message to queue
-										queueManager.mqPut(queue, content.toString());
-										System.out.println("File : " + file.toString() + " sent to MQ queue " + QUEUE_TO_SWIFT + ".");
+										queueManager.mqPut(queue, content.toString(), connectionParams);
+										System.out.println("File : " + file.toString() + " sent to MQ queue " + connectionParams.getQueueToSwift() + ".");
 	
 										// Archive file
 										archiveFile(file.getFileName().toString());
@@ -99,7 +95,7 @@ public class ToSwift extends Thread {
 
 			// Sleeping
 			try {
-				Thread.sleep(1000 * SLEEPING_DURATION);
+				Thread.sleep(1000 * connectionParams.getSleepingDuration());
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
