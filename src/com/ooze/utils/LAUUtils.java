@@ -2,15 +2,12 @@ package com.ooze.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
@@ -149,24 +146,6 @@ public class LAUUtils {
 		// Flush and close the output stream
 		cos.flush();
 		cos.close();
-	}
-
-	// LAU with AES-GCM -> Decrypt beginning of a file to string
-	public static String decryptAESGCMToString(String keyString, File file) throws Exception {
-		try (FileInputStream fis = new FileInputStream(file);
-			 ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-			
-			// Lire seulement les premiers 102400 bytes (ou la taille du fichier si plus petit)
-			byte[] buffer = new byte[102400];
-			int bytesRead = fis.read(buffer);
-			byte[] encryptedData = Arrays.copyOf(buffer, bytesRead);
-
-			try (ByteArrayInputStream bis = new ByteArrayInputStream(encryptedData)) {
-				decryptAESGCM(keyString, bis, bos);
-			}
-
-			return new String(bos.toByteArray(), StandardCharsets.UTF_8);
-		}
 	}
 
 	// LAU with AES-GCM -> Decrypt file

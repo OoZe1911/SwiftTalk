@@ -9,7 +9,6 @@
 	<classpathentry kind="lib" path="libs/com.ibm.mq.allclient.jar"/>
 	<classpathentry kind="lib" path="libs/com.ibm.mq.jmqi.jar"/>
 	<classpathentry kind="lib" path="libs/com.ibm.mqjms.jar"/>
-	<classpathentry kind="lib" path="libs/javax.jms-api-2.0.1.jar"/>
 	<classpathentry kind="lib" path="libs/json.jar"/>
 	<classpathentry kind="lib" path="libs/xmlsec-3.0.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
