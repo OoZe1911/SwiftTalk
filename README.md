@@ -14,20 +14,39 @@ SwiftTalk is able to receive messages from SAA by :
 LAU will be implemented in a near future.
 
 ## Configuration
-SwiftTalk configuration is managed in a file named SwiftTalk.properties
+SwiftTalk configuration is managed in SwiftTalk.properties file.
+
 The following properties should be set :
+
+Folder configuration :
 - FOLDER_TO_SWIFT : folder to be scanned to sent SWIFT messages to SAA
 - ARCHIVE_FOLDER : folder where successfully sent files are moved
 - RETENTION_PERIOD : number of days to keep archived files (older files are removed when starting SwiftTalk)
 - FOLDER_FROM_SWIFT : folder where files containing SWIFT messages received from SAA are created
+
+MQ Configuration :
 - QMGRHOST : hostname where the IBM MQ Manager is hosted
 - QMGRNAME : name of the queue manager
 - QMGRPORT : port number used by the MQ listener
 - CHANNEL : channel name to communicate with the queue manager
+
+If TLS is enabled with the remote MQ Server :
+- CYPHER : cypher algorithm used for TLS
+- TRUSTSTORE : path to the tuststore file
+- TRUSTSTORE_PASSWORD : password of the tuststore file
+- KEYSTORE : path to the keystore file
+- KEYSTORE_PASSWORD : password of the keystore file
+- SSLPEER : ssl peer to use (optional)
+
 - QUEUE_TO_SWIFT : queue used to send SWIFT messages to SAA
 - REPLY_TO_QUEUE : queue used to receive SAA PAN / NAN
 - QUEUE_ACK_SWIFT : queue used to receive SWIFT ACK/NACK
 - QUEUE_FROM_SWIFT : queue used to receive SWIFT messages from SAA
+
+If LAU has to be enabled :
+LAU_TYPË : type of LAU to use HMAC or AES
+LAU_KEY : the LAU key to use for sending messages to SAA
+
 - SLEEPING_DURATION : sleeping duration in seconds, used when there is no more file to send and all queues have been scanned without any message
 
 The REPLY_TO_QUEUE, QUEUE_ACK_SWIFT and QUEUE_FROM_SWIFT could be the same. SwiftTalk is able to detect what kind of message has been received and process it accordingly.
