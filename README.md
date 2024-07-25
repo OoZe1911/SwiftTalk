@@ -29,24 +29,23 @@ MQ Configuration :
 - QMGRNAME : name of the queue manager
 - QMGRPORT : port number used by the MQ listener
 - CHANNEL : channel name to communicate with the queue manager
-
-If TLS is enabled with the remote MQ Server :
-- CYPHER : cypher algorithm used for TLS
-- TRUSTSTORE : path to the tuststore file
-- TRUSTSTORE_PASSWORD : password of the tuststore file
-- KEYSTORE : path to the keystore file
-- KEYSTORE_PASSWORD : password of the keystore file
-- SSLPEER : ssl peer to use (optional)
-
 - QUEUE_TO_SWIFT : queue used to send SWIFT messages to SAA
 - REPLY_TO_QUEUE : queue used to receive SAA PAN / NAN
 - QUEUE_ACK_SWIFT : queue used to receive SWIFT ACK/NACK
 - QUEUE_FROM_SWIFT : queue used to receive SWIFT messages from SAA
 
-If LAU has to be enabled :
-LAU_TYPË : type of LAU to use HMAC or AES
-LAU_KEY : the LAU key to use for sending messages to SAA
+If TLS is enabled with the remote MQ Server :
+- CYPHER : cypher algorithm used for TLS
+- TRUSTSTORE_PASSWORD : password of the tuststore file
+- KEYSTORE : path to the keystore file
+- KEYSTORE_PASSWORD : password of the keystore file
+- SSLPEER : ssl peer to use (optional)
 
+If LAU has to be enabled :
+- LAU_TYPE : type of LAU to use HMAC or AES
+- LAU_KEY : the LAU key to use for sending messages to SAA
+
+Sleeping time :
 - SLEEPING_DURATION : sleeping duration in seconds, used when there is no more file to send and all queues have been scanned without any message
 
 The REPLY_TO_QUEUE, QUEUE_ACK_SWIFT and QUEUE_FROM_SWIFT could be the same. SwiftTalk is able to detect what kind of message has been received and process it accordingly.
