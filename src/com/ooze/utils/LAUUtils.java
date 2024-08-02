@@ -30,6 +30,34 @@ public class LAUUtils {
 	public static final int IV_LENGTH = 12; // in bytes
 	public static final int GCM_TAG_LENGTH = 16; // in bytes
 
+	// Compute LAU for FIN message (inputText should be the FIN message without block S Security)
+	public static String computeLAUforFIN(String inputText, String LAU) {
+		String returningText = null;
+
+		try {
+
+			SecretKeySpec key = new SecretKeySpec((LAU).getBytes("UTF-8"), "hmac256");
+			Mac mac = Mac.getInstance("hmacsha256");
+			mac.init(key);
+
+			byte[] bytes = mac.doFinal(inputText.getBytes("ASCII"));
+
+			StringBuilder hash = new StringBuilder();
+			for(int i = 0; i < bytes.length; i++) {
+				String hex = Integer.toHexString(0xff & bytes[i]);
+                if(hex.length() == 1) hex = "0" + hex;
+                hash.append(hex);
+			}
+			returningText = hash.toString().toUpperCase();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		return returningText;
+	}
+
+	// Compute LAU for DataPDU message
 	public static String computeLAU(String dataPDU, String LAU_key) {
 		try {
 			// Step 1 : Convert string to XML document
