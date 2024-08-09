@@ -31,7 +31,7 @@ public class ToSwift extends Thread {
 	public void run() {
 		sendMessagesToSAA();
 	}
-	
+
 	public void sendMessagesToSAA() {
 
 		while(!SwiftTalk.exit) {
@@ -44,37 +44,37 @@ public class ToSwift extends Thread {
 			// Scanning folder
 			Path directory = Paths.get(FOLDER_TO_SWIFT);
 			try (Stream<Path> stream = Files.list(directory)) {
-					stream.forEach(file -> {
-							if (Files.isRegularFile(file)) {
+				stream.forEach(file -> {
+					if (Files.isRegularFile(file)) {
 
-								if(!file.getFileName().toString().substring(0, 1).equals(".")) {
+						if(!file.getFileName().toString().substring(0, 1).equals(".")) {
 
-									if (!FileUtils.isFileLocked(new File(file.toString()))) {
+							if (!FileUtils.isFileLocked(new File(file.toString()))) {
 
-										// Get file content
-										StringBuilder content = new StringBuilder();
-										try (Scanner scanner = new Scanner(new File(file.toString()))) {
-											while (scanner.hasNextLine()) {
-													content.append(scanner.nextLine()).append("\n");
-											}
-										} catch (FileNotFoundException e) {
-											e.printStackTrace();
-										}
-		
-										// Put message to queue
-										queueManager.mqPut(queue, content.toString(), connectionParams);
-										System.out.println("File : " + file.toString() + " sent to MQ queue " + connectionParams.getQueueToSwift() + ".");
-	
-										// Archive file
-										archiveFile(file.getFileName().toString());
-	
-									} else {
-										System.out.println("File " + file.toString() + " is locked, skipping.");
+								// Get file content
+								StringBuilder content = new StringBuilder();
+								try (Scanner scanner = new Scanner(new File(file.toString()))) {
+									while (scanner.hasNextLine()) {
+										content.append(scanner.nextLine()).append("\n");
 									}
+								} catch (FileNotFoundException e) {
+									e.printStackTrace();
 								}
 
+								// Put message to queue
+								queueManager.mqPut(queue, content.toString(), connectionParams);
+								System.out.println("File : " + file.toString() + " sent to MQ queue " + connectionParams.getQueueToSwift() + ".");
+
+								// Archive file
+								archiveFile(file.getFileName().toString());
+
+							} else {
+								System.out.println("File " + file.toString() + " is locked, skipping.");
 							}
-					});
+						}
+
+					}
+				});
 
 				if(SwiftTalk.exit)
 					break;
@@ -123,5 +123,5 @@ public class ToSwift extends Thread {
 		System.out.println("File does not exist anymore, can not archive.");
 		return true;
 	}
-	
+
 }

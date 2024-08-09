@@ -72,14 +72,14 @@ public class FromSwift extends Thread {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-	
+
 						String messageReference = null;
 						if(messageContent !=null && messageContent.indexOf("<Saa:SenderReference>") != -1) {
 							messageReference = messageContent.substring(messageContent.indexOf("<Saa:SenderReference>") + 21,messageContent.indexOf("</Saa:SenderReference>"));
 						} else {
 							messageReference = "Unknown";
 						}
-	
+
 						// Feedback
 						if(message.messageType == 4) {
 							// PAN
@@ -110,7 +110,7 @@ public class FromSwift extends Thread {
 			} catch (MQException e) {
 				e.printStackTrace();
 			}
-			
+
 			// Close queue connection
 			queueManager.closeConnection();
 
@@ -124,14 +124,14 @@ public class FromSwift extends Thread {
 	}
 
 
-    public static String[] removeDuplicates(String[] array) {
-        Set<String> set = new HashSet<>();
-        for (String s : array) {
-            if (s != null) {
-                set.add(s);
-            }
-        }
-        return set.toArray(new String[0]);
-    }
+	public static String[] removeDuplicates(String[] array) {
+		Set<String> set = new HashSet<>();
+		for (String s : array) {
+			if (s != null) {
+				set.add(s);
+			}
+		}
+		return set.toArray(new String[0]);
+	}
 
 }

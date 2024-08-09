@@ -99,7 +99,7 @@ public class MQManager {
 				System.out.println("CC=" + e.completionCode + " : RC=" + e.reasonCode);
 				return null;
 			}
-			*/
+			 */
 			if ( (e.completionCode != CMQC.MQCC_FAILED) || (e.reasonCode != CMQC.MQRC_NO_MSG_AVAILABLE) ) {
 				System.out.println("MQException: " + e.getLocalizedMessage());
 				System.out.println("CC=" + e.completionCode + " : RC=" + e.reasonCode);

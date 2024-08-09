@@ -28,9 +28,9 @@ import org.w3c.dom.Document;
 
 public class LAUUtils {
 
-    static {
-        org.apache.xml.security.Init.init();
-    }
+	static {
+		org.apache.xml.security.Init.init();
+	}
 
 	// Cipher parameters that are used
 	public static final int AES_KEY_SIZE = 256; // in bits
@@ -92,14 +92,14 @@ public class LAUUtils {
 			signedInfo += "</ds:Reference>\n";
 			signedInfo += "</ds:SignedInfo>\n";
 
-            // Convert signedInfo string to Document for canonicalization
-            Document signedInfoDoc = convertStringToDocument(signedInfo);
-            byte[] canonicalSignedInfo = canonicalizeDocument(signedInfoDoc);
+			// Convert signedInfo string to Document for canonicalization
+			Document signedInfoDoc = convertStringToDocument(signedInfo);
+			byte[] canonicalSignedInfo = canonicalizeDocument(signedInfoDoc);
 
-            // Calculate HMAC-SHA256 of the canonicalized SignedInfo using the full LAU key
-            byte[] secretKey = LAU_key.getBytes(StandardCharsets.UTF_8);
-            byte[] hmacValue = calculateHMACSHA256(canonicalSignedInfo, secretKey);
-            String hmacBase64 = Base64.getEncoder().encodeToString(hmacValue);
+			// Calculate HMAC-SHA256 of the canonicalized SignedInfo using the full LAU key
+			byte[] secretKey = LAU_key.getBytes(StandardCharsets.UTF_8);
+			byte[] hmacValue = calculateHMACSHA256(canonicalSignedInfo, secretKey);
+			String hmacBase64 = Base64.getEncoder().encodeToString(hmacValue);
 
 			// Step 4 : Add LAU part to the DataPDU
 			dataPDU = dataPDU.substring(0, dataPDU.indexOf("<Saa:LAU>"));
@@ -181,7 +181,7 @@ public class LAUUtils {
 		while ((len = input.read(buffer)) != -1) {
 			cos.write(buffer, 0, len);
 		}
-		
+
 		// Flush and close the output stream
 		cos.flush();
 		cos.close();
@@ -190,8 +190,8 @@ public class LAUUtils {
 	// LAU with AES-GCM -> Decrypt beginning of a file to string
 	public static String decryptAESGCMToString(String keyString, File file) throws Exception {
 		try (FileInputStream fis = new FileInputStream(file);
-			 ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-			
+				ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+
 			// Lire seulement les premiers 102400 bytes (ou la taille du fichier si plus petit)
 			byte[] buffer = new byte[102400];
 			int bytesRead = fis.read(buffer);

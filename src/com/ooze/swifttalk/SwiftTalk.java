@@ -151,7 +151,7 @@ public class SwiftTalk {
 			thread_from_swift = new FromSwift(connectionParams);
 			thread_from_swift.start();
 		}
-		
+
 		// Wait in infinite loop
 		final Object lock = new Object();
 		Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -182,7 +182,7 @@ public class SwiftTalk {
 		System.out.println("Trying to stop SwiftTalk...");
 		exit=true;
 		while ((thread_to_swift != null && thread_to_swift.isAlive()) || 
-				   (thread_from_swift != null && thread_from_swift.isAlive())) {
+				(thread_from_swift != null && thread_from_swift.isAlive())) {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
