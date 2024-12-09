@@ -1,5 +1,7 @@
 package com.ooze.bean;
 
+import java.util.ArrayList;
+
 public class ConnectionParams {
 	public String qmgrHost = null;
 	public String qmgrName=null;
@@ -13,7 +15,7 @@ public class ConnectionParams {
 	public String sslPeer=null;
 	public String replyToQueue=null;
 	public String queueAckSwift=null;
-	public String queueFromSwift=null;
+	public ArrayList<String> queueFromSwift=null;
 	public String queueToSwift=null;
 	public String lauType=null;
 	public String lauKey=null;
@@ -91,10 +93,10 @@ public class ConnectionParams {
 	public void setQueueAckSwift(String queueAckSwift) {
 		this.queueAckSwift = queueAckSwift;
 	}
-	public String getQueueFromSwift() {
+	public ArrayList<String> getQueueFromSwift() {
 		return queueFromSwift;
 	}
-	public void setQueueFromSwift(String queueFromSwift) {
+	public void setQueueFromSwift(ArrayList<String> queueFromSwift) {
 		this.queueFromSwift = queueFromSwift;
 	}
 	public String getQueueToSwift() {

@@ -1,6 +1,7 @@
 package com.ooze.swifttalk;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
@@ -29,10 +30,17 @@ public class SwiftTalk {
 			System.exit(-1);
 		}
 
+		FromSwift.FOLDER_FROM_SWIFT = conf.getProperty("FOLDER_FROM_SWIFT");
+		System.out.println("FOLDER_FROM_SWIFT = " + FromSwift.FOLDER_FROM_SWIFT);
+		if(!FileUtils.fileExists(FromSwift.FOLDER_FROM_SWIFT)) {
+			System.out.println("ERROR : Folder " + FromSwift.FOLDER_FROM_SWIFT + " does not exist.");
+			System.exit(-1);
+		}
+
 		ToSwift.FOLDER_TO_SWIFT = conf.getProperty("FOLDER_TO_SWIFT");
 		System.out.println("FOLDER_TO_SWIFT = " + ToSwift.FOLDER_TO_SWIFT);
 		if(!FileUtils.fileExists(ToSwift.FOLDER_TO_SWIFT)) {
-			System.out.println("ERROR : Folder does not exist.");
+			System.out.println("ERROR : Folder " + ToSwift.FOLDER_TO_SWIFT + " does not exist.");
 			System.exit(-1);
 		}
 
@@ -96,7 +104,13 @@ public class SwiftTalk {
 		connectionParams.setQueueAckSwift(conf.getProperty("QUEUE_ACK_SWIFT"));
 		System.out.println("QUEUE_ACK_SWIFT = " + connectionParams.getQueueAckSwift());
 
-		connectionParams.setQueueFromSwift(conf.getProperty("QUEUE_FROM_SWIFT"));
+		// Get list of queues from SWIFT
+		String[] tokens = conf.getProperty("QUEUE_FROM_SWIFT").split(",");
+		ArrayList<String> result = new ArrayList<>();
+		for (String token : tokens) {
+			result.add(token.trim());
+		}
+		connectionParams.setQueueFromSwift(result);
 		System.out.println("QUEUE_FROM_SWIFT = " + connectionParams.getQueueFromSwift());
 
 		// MQ TLS
@@ -146,7 +160,7 @@ public class SwiftTalk {
 		}
 
 		// Running thread in charge of receiving messages from SAA
-		if(connectionParams.getQueueFromSwift() != null && connectionParams.getQueueFromSwift().trim().length() > 0) {
+		if(connectionParams.getQueueFromSwift() != null && connectionParams.getQueueFromSwift().size() > 0) {
 			System.out.println("-> Starting receiving thread");
 			thread_from_swift = new FromSwift(connectionParams);
 			thread_from_swift.start();
