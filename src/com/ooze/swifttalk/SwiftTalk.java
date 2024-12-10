@@ -7,52 +7,50 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.TimeZone;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+
 import com.ooze.bean.ConnectionParams;
 import com.ooze.utils.FileUtils;
 
 public class SwiftTalk {
+	private static final Logger logger = LogManager.getLogger(SwiftTalk.class);
 	// Token to quit SwiftTalk
 	public static boolean exit=false;
 	public static Thread thread_to_swift = null;
 	public static Thread thread_from_swift = null;
 
 	public static void main(String[] args) {
-		System.out.println("---------------------------");
-		System.out.println("SwiftTalk v0.1 is starting ");
-		System.out.println("---------------------------");
+		String log4jConfigFile = "log4j2.xml";
+		Configurator.initialize(null, log4jConfigFile);
+		logger.info("SwiftTalk v0.1 is starting");
 
 		// Reading configuration file
 		Properties conf = null;
 		try {
 			conf = FileUtils.readPropertiesFile("SwiftTalk.properties");
 		}catch (Exception e) {
-			e.printStackTrace();
+			logger.error("SwiftTalk.properties file not found.", e);
 			System.exit(-1);
 		}
 
 		FromSwift.FOLDER_FROM_SWIFT = conf.getProperty("FOLDER_FROM_SWIFT");
-		System.out.println("FOLDER_FROM_SWIFT = " + FromSwift.FOLDER_FROM_SWIFT);
-		if(!FileUtils.fileExists(FromSwift.FOLDER_FROM_SWIFT)) {
-			System.out.println("ERROR : Folder " + FromSwift.FOLDER_FROM_SWIFT + " does not exist.");
-			System.exit(-1);
-		}
+		logger.info("FOLDER_FROM_SWIFT = " + FromSwift.FOLDER_FROM_SWIFT);
 
 		ToSwift.FOLDER_TO_SWIFT = conf.getProperty("FOLDER_TO_SWIFT");
-		System.out.println("FOLDER_TO_SWIFT = " + ToSwift.FOLDER_TO_SWIFT);
-		if(!FileUtils.fileExists(ToSwift.FOLDER_TO_SWIFT)) {
-			System.out.println("ERROR : Folder " + ToSwift.FOLDER_TO_SWIFT + " does not exist.");
-			System.exit(-1);
-		}
+		logger.info("FOLDER_TO_SWIFT = " + ToSwift.FOLDER_TO_SWIFT);
 
 		ToSwift.ARCHIVE_FOLDER = conf.getProperty("ARCHIVE_FOLDER");
-		System.out.println("ARCHIVE_FOLDER = " + ToSwift.ARCHIVE_FOLDER);
+		FromSwift.ARCHIVE_FOLDER = conf.getProperty("ARCHIVE_FOLDER");
+		logger.info("ARCHIVE_FOLDER = " + ToSwift.ARCHIVE_FOLDER);
 		if(!FileUtils.fileExists(ToSwift.ARCHIVE_FOLDER)) {
-			System.out.println("ERROR : Folder does not exist.");
+			logger.error("ERROR : Folder does not exist.");
 			System.exit(-1);
 		}
 
 		int retention_period = Integer.parseInt(conf.getProperty("RETENTION_PERIOD"));
-		System.out.println("Retention period for archived files (in days) : " + retention_period);
+		logger.info("Retention period for archived files (in days) : " + retention_period);
 		Calendar cal = Calendar.getInstance(TimeZone.getDefault());
 		boolean chgtAnnee = false;
 		if (cal.get(5) < retention_period - 1 && cal.get(2) == 1)
@@ -65,7 +63,7 @@ public class SwiftTalk {
 		cal.set(14, 0);
 		if (chgtAnnee)
 			cal.roll(1, false); 
-		System.out.println("Removing old files ---");
+		logger.info("Removing old files ---");
 		File archive_folder = new File(ToSwift.ARCHIVE_FOLDER);
 		File[] children = archive_folder.listFiles();
 		int nb = 0;
@@ -74,35 +72,35 @@ public class SwiftTalk {
 			if (!file.isDirectory()) {
 				Date fileDate = new Date(file.lastModified());
 				if (fileDate.before(cal.getTime())) {
-					System.out.println("File deleted : " + file.getName() + " - " + fileDate);
+					logger.info("File deleted : " + file.getName() + " - " + fileDate);
 					file.delete();
 					nb++;
 				}
 			}
 		}
-		System.out.println("--- " + nb + " old files deleted.");
+		logger.info("--- " + nb + " old files deleted.");
 
 		ConnectionParams connectionParams = new ConnectionParams();
 		connectionParams.setQmgrHost(conf.getProperty("QMGRHOST"));
-		System.out.println("QMGRHOST = " + connectionParams.getQmgrHost());
+		logger.info("QMGRHOST = " + connectionParams.getQmgrHost());
 
 		connectionParams.setQmgrName(conf.getProperty("QMGRNAME"));
-		System.out.println("QMGRNAME = " + connectionParams.getQmgrName());
+		logger.info("QMGRNAME = " + connectionParams.getQmgrName());
 
 		connectionParams.setQmgrPort(Integer.parseInt(conf.getProperty("QMGRPORT")));
-		System.out.println("QMGRPORT = " + connectionParams.getQmgrPort());
+		logger.info("QMGRPORT = " + connectionParams.getQmgrPort());
 
 		connectionParams.setChannel(conf.getProperty("CHANNEL"));
-		System.out.println("CHANNEL = " + connectionParams.getChannel());
+		logger.info("CHANNEL = " + connectionParams.getChannel());
 
 		connectionParams.setQueueToSwift(conf.getProperty("QUEUE_TO_SWIFT"));
-		System.out.println("QUEUE_TO_SWIFT = " + connectionParams.getQueueToSwift());
+		logger.info("QUEUE_TO_SWIFT = " + connectionParams.getQueueToSwift());
 
 		connectionParams.setReplyToQueue(conf.getProperty("REPLY_TO_QUEUE"));
-		System.out.println("REPLY_TO_QUEUE = " + connectionParams.getReplyToQueue());
+		logger.info("REPLY_TO_QUEUE = " + connectionParams.getReplyToQueue());
 
 		connectionParams.setQueueAckSwift(conf.getProperty("QUEUE_ACK_SWIFT"));
-		System.out.println("QUEUE_ACK_SWIFT = " + connectionParams.getQueueAckSwift());
+		logger.info("QUEUE_ACK_SWIFT = " + connectionParams.getQueueAckSwift());
 
 		// Get list of queues from SWIFT
 		String[] tokens = conf.getProperty("QUEUE_FROM_SWIFT").split(",");
@@ -111,57 +109,65 @@ public class SwiftTalk {
 			result.add(token.trim());
 		}
 		connectionParams.setQueueFromSwift(result);
-		System.out.println("QUEUE_FROM_SWIFT = " + connectionParams.getQueueFromSwift());
+		logger.info("QUEUE_FROM_SWIFT = " + connectionParams.getQueueFromSwift());
 
 		// MQ TLS
 		connectionParams.setCypher(conf.getProperty("CYPHER"));
-		System.out.println("CYPHER = " + connectionParams.getCypher());
+		logger.info("CYPHER = " + connectionParams.getCypher());
 
 		connectionParams.setTrustStore(conf.getProperty("TRUSTSORE"));
-		System.out.println("TRUSTSORE = " + connectionParams.getTrustStore());
+		logger.info("TRUSTSORE = " + connectionParams.getTrustStore());
 		if (connectionParams.getTrustStore() != null && connectionParams.getTrustStore().length() > 0)
 			System.setProperty("javax.net.ssl.trustStore", connectionParams.getTrustStore());
 
 		connectionParams.setTrustStorePassword(conf.getProperty("TRUSTSORE_PASSWORD"));
-		System.out.println("TRUSTSORE_PASSWORD = " + connectionParams.getTrustStorePassword());
+		logger.info("TRUSTSORE_PASSWORD = " + connectionParams.getTrustStorePassword());
 		if (connectionParams.getTrustStorePassword() != null && connectionParams.getTrustStorePassword().length() > 0)
 			System.setProperty("javax.net.ssl.trustStorePassword", connectionParams.getTrustStorePassword());
 
 		connectionParams.setKeyStore(conf.getProperty("KEYSTORE"));
-		System.out.println("KEYSTORE = " + connectionParams.getKeyStore());
+		logger.info("KEYSTORE = " + connectionParams.getKeyStore());
 		if (connectionParams.getKeyStore() != null && connectionParams.getKeyStore().length() > 0)
 			System.setProperty("javax.net.ssl.keyStore", connectionParams.getKeyStore());
 
 		connectionParams.setKeyStorePassword(conf.getProperty("KEYSTORE_PASSWORD"));
-		System.out.println("KEYSTORE_PASSWORD = " + connectionParams.getKeyStorePassword());
+		logger.info("KEYSTORE_PASSWORD = " + connectionParams.getKeyStorePassword());
 		if (connectionParams.getKeyStorePassword() != null && connectionParams.getKeyStorePassword().length() > 0)
 			System.setProperty("javax.net.ssl.keyStorePassword", connectionParams.getKeyStorePassword());
 
 		connectionParams.setSslPeer(conf.getProperty("SSLPEER"));
-		System.out.println("SSLPEER = " + connectionParams.getSslPeer());
+		logger.info("SSLPEER = " + connectionParams.getSslPeer());
 
 		// LAU (Empty, HMAC, AES)
 		connectionParams.setLauType(conf.getProperty("LAU_TYPE"));
-		System.out.println("LAU_TYPE = " + connectionParams.getLauType());
+		logger.info("LAU_TYPE = " + connectionParams.getLauType());
 		connectionParams.setLauKey(conf.getProperty("LAU_KEY"));
-		System.out.println("LAU_KEY = " + conf.getProperty("LAU_KEY"));
+		logger.info("LAU_KEY = " + conf.getProperty("LAU_KEY"));
 
 		connectionParams.setSleepingDuration(Integer.parseInt(conf.getProperty("SLEEPING_DURATION")));
-		System.out.println("SLEEPING_DURATION = " + connectionParams.getSleepingDuration());
+		logger.info("SLEEPING_DURATION = " + connectionParams.getSleepingDuration());
 
-		System.out.println("-------------------------------------------------");
 		System.out.println("SwiftTalk is ready for business.");
-
+		logger.info("SwiftTalk is ready for business.");
+		
 		// Running thread in charge of sending messages to SAA
 		if (connectionParams.getQueueToSwift() != null && connectionParams.getQueueToSwift().trim().length() > 0) {
-			System.out.println("-> Starting sending thread");
+			if(!FileUtils.fileExists(ToSwift.FOLDER_TO_SWIFT)) {
+				logger.error("ERROR : Folder " + ToSwift.FOLDER_TO_SWIFT + " does not exist.");
+				System.exit(-1);
+			}
+			logger.info("-> Starting sending thread");
 			thread_to_swift = new ToSwift(connectionParams);
 			thread_to_swift.start();
 		}
 
 		// Running thread in charge of receiving messages from SAA
 		if(connectionParams.getQueueFromSwift() != null && connectionParams.getQueueFromSwift().size() > 0) {
-			System.out.println("-> Starting receiving thread");
+			if(!FileUtils.fileExists(FromSwift.FOLDER_FROM_SWIFT)) {
+				logger.error("ERROR : Folder " + FromSwift.FOLDER_FROM_SWIFT + " does not exist.");
+				System.exit(-1);
+			}
+			logger.info("-> Starting receiving thread");
 			thread_from_swift = new FromSwift(connectionParams);
 			thread_from_swift.start();
 		}
@@ -194,15 +200,17 @@ public class SwiftTalk {
 
 	public static void handleJVMShutdown() {
 		System.out.println("Trying to stop SwiftTalk...");
+		logger.info("Trying to stop SwiftTalk...");
 		exit=true;
 		while ((thread_to_swift != null && thread_to_swift.isAlive()) || 
 				(thread_from_swift != null && thread_from_swift.isAlive())) {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				logger.error("Can not stop thread", e);
 			}
 		}
 		System.out.println("SwiftTalk stopped.");
+		logger.info("SwiftTalk stopped.");
 	}
 }

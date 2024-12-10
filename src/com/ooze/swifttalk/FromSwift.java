@@ -2,6 +2,9 @@ package com.ooze.swifttalk;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,6 +13,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQMessage;
 import com.ibm.mq.MQQueue;
@@ -17,8 +23,10 @@ import com.ooze.bean.ConnectionParams;
 import com.ooze.manager.MQManager;
 
 public class FromSwift extends Thread {
+	private static final Logger logger = LogManager.getLogger(FromSwift.class);
 	private ConnectionParams connectionParams;
 	public static String FOLDER_FROM_SWIFT = null;
+	public static String ARCHIVE_FOLDER = null;
 	private static final Pattern MT_MUR = Pattern.compile("\\{3:.*\\{108:(.+?)\\}");
 	private static final Pattern MT_TRN = Pattern.compile("(?::20:(.*)|:20C:.*//(.*)|:20D:.*//(.*))");
 
@@ -48,7 +56,14 @@ public class FromSwift extends Thread {
 			// Open all queues
 			ArrayList<MQQueue> queue_connexions = new ArrayList<MQQueue>();
 			for(int i=0; i < queue_list.length; i++) {
-				queue_connexions.add(queueManager.initConnctionToQueue(queue_list[i]));
+				if(queue_list[i] != null && queue_list[i].length() > 0) {
+					try {
+						queue_connexions.add(queueManager.initConnctionToQueue(queue_list[i]));
+					}catch (Exception ex) {
+						logger.error("Cannot open queue : " + queue_list[i], ex);
+                        continue;
+					}
+				}
 			}
 
 			// Read messages in queues
@@ -83,6 +98,7 @@ public class FromSwift extends Thread {
 							messageContent = new String(contentBytes);
 						} catch (IOException e) {
 							e.printStackTrace();
+							break;
 						}
 
 						String messageReference = null;
@@ -110,10 +126,10 @@ public class FromSwift extends Thread {
 						if(message.messageType == 4) {
 							// PAN
 							if(message.feedback == 275) {
-								System.out.println("PAN Received for message reference = " + messageReference);
+								logger.info("PAN Received for message reference = " + messageReference);
 							} else {
 								if(message.feedback == 65537) {
-									System.out.println("NAN Received for message reference = " + messageReference);	
+									logger.info("NAN Received for message reference = " + messageReference);	
 								}
 							}
 
@@ -125,10 +141,15 @@ public class FromSwift extends Thread {
 								if(contentBytes.length > 0) {
 									String timestamp = new SimpleDateFormat("yyyyMMdd-HHmmssSSS").format(new Date());
 									String fileName = FOLDER_FROM_SWIFT + "/" + timestamp + "-" + messageReference + fileExtension;
-									try (FileOutputStream fileOutputStream = new FileOutputStream(fileName)) {
-										fileOutputStream.write(contentBytes);
+						            String filePath = FOLDER_FROM_SWIFT + "/" + fileName;
+						            String archivePath = ARCHIVE_FOLDER + "/" + fileName;
+									try {
+										try (FileOutputStream fileOutputStream = new FileOutputStream(fileName)) {
+											fileOutputStream.write(contentBytes);
+										}
+										Files.copy(Paths.get(filePath), Paths.get(archivePath), StandardCopyOption.REPLACE_EXISTING);
 									} catch (IOException e) {
-										e.printStackTrace();
+										logger.error("Failed create file/copy file to archive : " + fileName, e);
 									}
 								}
 							}
