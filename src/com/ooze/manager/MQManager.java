@@ -2,6 +2,9 @@ package com.ooze.manager;
 
 import java.util.Hashtable;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQGetMessageOptions;
 import com.ibm.mq.MQMessage;
@@ -13,6 +16,7 @@ import com.ibm.mq.constants.MQConstants;
 import com.ooze.bean.ConnectionParams;
 
 public class MQManager {
+	private static final Logger logger = LogManager.getLogger(MQManager.class);
 
 	public MQQueueManager qMgr = null;
 
@@ -101,8 +105,8 @@ public class MQManager {
 			}
 			 */
 			if ( (e.completionCode != CMQC.MQCC_FAILED) || (e.reasonCode != CMQC.MQRC_NO_MSG_AVAILABLE) ) {
-				System.out.println("MQException: " + e.getLocalizedMessage());
-				System.out.println("CC=" + e.completionCode + " : RC=" + e.reasonCode);
+				logger.warn("MQException: " + e.getLocalizedMessage());
+				logger.warn("CC=" + e.completionCode + " : RC=" + e.reasonCode);
 				return null;				
 			} else {
 				return null;

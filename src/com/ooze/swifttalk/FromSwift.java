@@ -97,7 +97,7 @@ public class FromSwift extends Thread {
 							message.readFully(contentBytes);
 							messageContent = new String(contentBytes);
 						} catch (IOException e) {
-							e.printStackTrace();
+							logger.error("Can not get message from queue", e);
 							break;
 						}
 
@@ -136,15 +136,16 @@ public class FromSwift extends Thread {
 						} else {
 							// Message
 							if(message.messageType == 8 && messageContent != null) {
-								System.out.println("SWIFT message received = " + messageContent);
+								logger.debug("SWIFT message received = " + messageContent);
+								logger.info("Message received : " + messageReference);
 								// Write received message to disk
 								if(contentBytes.length > 0) {
 									String timestamp = new SimpleDateFormat("yyyyMMdd-HHmmssSSS").format(new Date());
-									String fileName = FOLDER_FROM_SWIFT + "/" + timestamp + "-" + messageReference + fileExtension;
+									String fileName = timestamp + "-" + messageReference + fileExtension;
 						            String filePath = FOLDER_FROM_SWIFT + "/" + fileName;
 						            String archivePath = ARCHIVE_FOLDER + "/" + fileName;
 									try {
-										try (FileOutputStream fileOutputStream = new FileOutputStream(fileName)) {
+										try (FileOutputStream fileOutputStream = new FileOutputStream(filePath)) {
 											fileOutputStream.write(contentBytes);
 										}
 										Files.copy(Paths.get(filePath), Paths.get(archivePath), StandardCopyOption.REPLACE_EXISTING);
@@ -165,7 +166,7 @@ public class FromSwift extends Thread {
 					queue_connexions.get(i).close();
 				}
 			} catch (MQException e) {
-				e.printStackTrace();
+				logger.error("Can not close queue", e);
 			}
 
 			// Close queue connection
@@ -175,7 +176,7 @@ public class FromSwift extends Thread {
 			try {
 				Thread.sleep(1000 * connectionParams.getSleepingDuration());
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				logger.error("Error while sleeping", e);
 			}
 		}
 	}

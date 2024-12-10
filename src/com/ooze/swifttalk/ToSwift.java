@@ -12,6 +12,9 @@ import java.nio.file.Paths;
 import java.util.Scanner;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQQueue;
 import com.ooze.bean.ConnectionParams;
@@ -19,6 +22,7 @@ import com.ooze.manager.MQManager;
 import com.ooze.utils.FileUtils;
 
 public class ToSwift extends Thread {
+	private static final Logger logger = LogManager.getLogger(ToSwift.class);
 	private ConnectionParams connectionParams;
 	public static String FOLDER_TO_SWIFT = null;
 	public static String ARCHIVE_FOLDER = null;
@@ -63,13 +67,13 @@ public class ToSwift extends Thread {
 
 								// Put message to queue
 								queueManager.mqPut(queue, content.toString(), connectionParams);
-								System.out.println("File : " + file.toString() + " sent to MQ queue " + connectionParams.getQueueToSwift() + ".");
+								logger.info("File : " + file.toString() + " sent to MQ queue " + connectionParams.getQueueToSwift() + ".");
 
 								// Archive file
 								archiveFile(file.getFileName().toString());
 
 							} else {
-								System.out.println("File " + file.toString() + " is locked, skipping.");
+								logger.warn("File " + file.toString() + " is locked, skipping.");
 							}
 						}
 
@@ -107,20 +111,20 @@ public class ToSwift extends Thread {
 	public static boolean archiveFile(String file) {
 		File physicalFile = new File(FOLDER_TO_SWIFT + File.separator + file);
 		if (physicalFile.renameTo(new File(ARCHIVE_FOLDER, physicalFile.getName()))) {
-			System.out.println("File " + physicalFile.toString() + " archived in " + ARCHIVE_FOLDER);
+			logger.info("File " + physicalFile.toString() + " archived in " + ARCHIVE_FOLDER);
 			return true;
 		}
 		if (FileUtils.fileExists(file)) {
-			System.out.println("A file with a same filename has been already archived");
+			logger.warn("A file with a same filename has been already archived");
 			File oldOne = new File(ARCHIVE_FOLDER + File.separator + physicalFile.getName());
 			oldOne.delete();
 			if (!physicalFile.renameTo(new File(ARCHIVE_FOLDER, physicalFile.getName()))) {
-				System.out.println("Can not archives file " + physicalFile.toString() + " in " + ARCHIVE_FOLDER);
+				logger.info("Can not archives file " + physicalFile.toString() + " in " + ARCHIVE_FOLDER);
 				return false;
 			}
 			return true;
 		}
-		System.out.println("File does not exist anymore, can not archive.");
+		logger.warn("File does not exist anymore, can not archive.");
 		return true;
 	}
 

@@ -24,7 +24,7 @@ public class SwiftTalk {
 	public static void main(String[] args) {
 		String log4jConfigFile = "log4j2.xml";
 		Configurator.initialize(null, log4jConfigFile);
-		logger.info("SwiftTalk v0.1 is starting");
+		logger.info("----- SwiftTalk v0.1 is starting -----");
 
 		// Reading configuration file
 		Properties conf = null;
@@ -210,7 +210,7 @@ public class SwiftTalk {
 				logger.error("Can not stop thread", e);
 			}
 		}
-		System.out.println("SwiftTalk stopped.");
 		logger.info("SwiftTalk stopped.");
+		System.out.println("SwiftTalk stopped.");
 	}
 }
