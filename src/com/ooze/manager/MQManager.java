@@ -20,7 +20,7 @@ public class MQManager {
 
 	public MQQueueManager qMgr = null;
 
-	public MQManager(String hostname, String qmgrname, int port, String channel, String cypher, String sslPeer) {
+	public MQManager(String hostname, String qmgrname, int port, String channel, String cypher, String sslPeer) throws Exception {
 		super();
 		Hashtable<String, Object> props = new Hashtable<String, Object>();
 		props.put(MQConstants.HOST_NAME_PROPERTY, hostname);
@@ -32,18 +32,19 @@ public class MQManager {
 			props.put(MQConstants.SSL_PEER_NAME_PROPERTY, sslPeer);
 		try {
 			qMgr = new MQQueueManager(qmgrname, props);
-		} catch (MQException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Can not open Queue Manager : " + qmgrname, e);
+			throw e;
 		}
 	}
 
-	public MQQueue initConnctionToQueue(String queueName) {
+	public MQQueue initConnctionToQueue(String queueName) throws Exception {
 		try {
 			MQQueue queue = qMgr.accessQueue(queueName, MQConstants.MQOO_OUTPUT | MQConstants.MQOO_INPUT_AS_Q_DEF);
 			return queue;
-		} catch (MQException e) {
-			e.printStackTrace();
-			return null;
+		} catch (Exception e) {
+			logger.error("Can not initialize connection to queue : " + queueName, e);
+			throw e;
 		}
 	}
 
@@ -63,7 +64,7 @@ public class MQManager {
 			message.writeString(content);
 			queue.put(message, pmo);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Failed to put message into queue " + queue, e);
 		}
 	}
 
@@ -116,11 +117,12 @@ public class MQManager {
 		return message;
 	}
 
-	public void closeConnection() {
+	public void closeConnection() throws Exception {
 		try {
 			qMgr.disconnect();
-		} catch (MQException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Can not close connection with Queue Manager");
+			throw e;
 		}
 	}
 }

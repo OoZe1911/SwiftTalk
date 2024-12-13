@@ -40,68 +40,95 @@ public class ToSwift extends Thread {
 
 		while(!SwiftTalk.exit) {
 			// Try to connect to MQ
-			MQManager queueManager = new MQManager(connectionParams.getQmgrHost(), connectionParams.getQmgrName(), connectionParams.getQmgrPort(), connectionParams.getChannel(), connectionParams.getCypher(), connectionParams.getSslPeer());
+			MQManager queueManager = null;
+			try {
+				queueManager = new MQManager(connectionParams.getQmgrHost(), connectionParams.getQmgrName(), connectionParams.getQmgrPort(), connectionParams.getChannel(), connectionParams.getCypher(), connectionParams.getSslPeer());
+				logger.debug("Connected to Queue Manager " + connectionParams.getQmgrName());
+			} catch (Exception e) {
+				logger.error("Can not connect to Queue Manager " + connectionParams.getQmgrName());
+				queueManager = null;
+			}
 
 			// Initialize queue connection
-			MQQueue queue = queueManager.initConnctionToQueue(connectionParams.getQueueToSwift());
-
-			// Scanning folder
-			Path directory = Paths.get(FOLDER_TO_SWIFT);
-			try (Stream<Path> stream = Files.list(directory)) {
-				stream.forEach(file -> {
-					if (Files.isRegularFile(file)) {
-
-						if(!file.getFileName().toString().substring(0, 1).equals(".")) {
-
-							if (!FileUtils.isFileLocked(new File(file.toString()))) {
-
-								// Get file content
-								StringBuilder content = new StringBuilder();
-								try (Scanner scanner = new Scanner(new File(file.toString()))) {
-									while (scanner.hasNextLine()) {
-										content.append(scanner.nextLine()).append("\n");
+			if(queueManager != null) {
+				MQQueue queue = null;
+				try {
+					queue = queueManager.initConnctionToQueue(connectionParams.getQueueToSwift());
+					logger.debug("Queue " + queue + " opened successfully");
+				} catch (Exception e) {
+					logger.error("Cannot open queue : " + queue, e);
+				}
+	
+				// Scanning folder
+				Path directory = Paths.get(FOLDER_TO_SWIFT);
+				try (Stream<Path> stream = Files.list(directory)) {
+					MQQueue finalQueue = queue;
+					MQManager finalQueueManager = queueManager;
+					stream.forEach(file -> {
+						if (Files.isRegularFile(file)) {
+	
+							if(!file.getFileName().toString().substring(0, 1).equals(".")) {
+	
+								if (!FileUtils.isFileLocked(new File(file.toString()))) {
+	
+									// Get file content
+									StringBuilder content = new StringBuilder();
+									try (Scanner scanner = new Scanner(new File(file.toString()))) {
+										while (scanner.hasNextLine()) {
+											content.append(scanner.nextLine()).append("\n");
+										}
+									} catch (FileNotFoundException e) {
+										logger.error("File not found", e);
 									}
-								} catch (FileNotFoundException e) {
-									e.printStackTrace();
+	
+									// Put message to queue
+									finalQueueManager.mqPut(finalQueue, content.toString(), connectionParams);
+									logger.info("File : " + file.toString() + " sent to MQ queue " + connectionParams.getQueueToSwift() + ".");
+	
+									// Archive file
+									archiveFile(file.getFileName().toString());
+	
+								} else {
+									logger.warn("File " + file.toString() + " is locked, skipping.");
 								}
-
-								// Put message to queue
-								queueManager.mqPut(queue, content.toString(), connectionParams);
-								logger.info("File : " + file.toString() + " sent to MQ queue " + connectionParams.getQueueToSwift() + ".");
-
-								// Archive file
-								archiveFile(file.getFileName().toString());
-
-							} else {
-								logger.warn("File " + file.toString() + " is locked, skipping.");
 							}
+	
 						}
+					});
+	
+					if(SwiftTalk.exit)
+						break;
+	
+				} catch (IOException e) {
+					logger.error("Can not send file to MQ queue", e);
+				}
+	
+				// Close queue
+				try {
+					queue.close();
+					logger.debug("Queue " + queue.getResolvedQName() + " closed.");
+				} catch (MQException e) {
+					logger.error("Can not close queue " + queue.getResolvedQName(), e);
+				}
+	
+				// Close Queue Manager connection
+				try {
+					queueManager.closeConnection();
+					logger.debug("Queue Manager " + connectionParams.getQmgrName() + " connection closed.");
+				} catch (Exception e) {
+					logger.error("Can not close connection to Queue Manager " + connectionParams.getQmgrName());
+				}
 
-					}
-				});
-
-				if(SwiftTalk.exit)
-					break;
-
-			} catch (IOException e) {
-				e.printStackTrace();
+			} else {
+				logger.debug("Not connected to Queue Manager");
 			}
-
-			// Close queue
-			try {
-				queue.close();
-			} catch (MQException ex) {
-				ex.printStackTrace();
-			}
-
-			// Close queue connection
-			queueManager.closeConnection();
 
 			// Sleeping
 			try {
+				logger.debug("Sleeping for " + connectionParams.getSleepingDuration() + " seconds");
 				Thread.sleep(1000 * connectionParams.getSleepingDuration());
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				logger.error("Error while sleeping", e);
 			}
 
 		}

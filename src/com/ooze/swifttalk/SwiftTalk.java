@@ -199,8 +199,8 @@ public class SwiftTalk {
 	}
 
 	public static void handleJVMShutdown() {
-		System.out.println("Trying to stop SwiftTalk...");
-		logger.info("Trying to stop SwiftTalk...");
+		System.out.println("Stopping SwiftTalk...");
+		logger.info("Stopping SwiftTalk...");
 		exit=true;
 		while ((thread_to_swift != null && thread_to_swift.isAlive()) || 
 				(thread_from_swift != null && thread_from_swift.isAlive())) {
@@ -210,7 +210,5 @@ public class SwiftTalk {
 				logger.error("Can not stop thread", e);
 			}
 		}
-		logger.info("SwiftTalk stopped.");
-		System.out.println("SwiftTalk stopped.");
 	}
 }

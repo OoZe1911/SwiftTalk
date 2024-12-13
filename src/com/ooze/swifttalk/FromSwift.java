@@ -51,129 +51,152 @@ public class FromSwift extends Thread {
 		// Scanning queues
 		while(!SwiftTalk.exit) {
 			// Try to connect to MQ
-			MQManager queueManager = new MQManager(connectionParams.getQmgrHost(), connectionParams.getQmgrName(), connectionParams.getQmgrPort(), connectionParams.getChannel(), connectionParams.getCypher(), connectionParams.getSslPeer());
-
-			// Open all queues
-			ArrayList<MQQueue> queue_connexions = new ArrayList<MQQueue>();
-			for(int i=0; i < queue_list.length; i++) {
-				if(queue_list[i] != null && queue_list[i].length() > 0) {
-					try {
-						queue_connexions.add(queueManager.initConnctionToQueue(queue_list[i]));
-					}catch (Exception ex) {
-						logger.error("Cannot open queue : " + queue_list[i], ex);
-                        continue;
-					}
-				}
+			MQManager queueManager = null;
+			try {
+				queueManager = new MQManager(connectionParams.getQmgrHost(), connectionParams.getQmgrName(), connectionParams.getQmgrPort(), connectionParams.getChannel(), connectionParams.getCypher(), connectionParams.getSslPeer());
+				logger.debug("Connected to Queue Manager " + connectionParams.getQmgrName());
+			} catch (Exception e) {
+				logger.error("Can not connect to Queue Manager " + connectionParams.getQmgrName());
+				queueManager = null;
 			}
 
-			// Read messages in queues
-			boolean message_found = true;
-			while(message_found) {
-
-				message_found = false;
-
-				for(int i=0; i < queue_connexions.size(); i++) {
-
-					// Get message
-					MQMessage message = queueManager.mqGet(queue_connexions.get(i));
-					if (message != null) {
-						message_found = true;
-
-						// Process message
-						// messageType = 4 + feedback = 275 = PAN
-						// messageType = 4 + feedback = 65537 = NAN
-						// messageType = 8 + feedback = 0 = SWIFT Message
-
-						// PAN SAA XML v2 sample :
-						// <?xml version="1.0" encoding="UTF-8" ?><Saa:DataPDU xmlns:Saa="urn:swift:saa:xsd:saa.2.0" xmlns:Sw="urn:swift:snl:ns.Sw" xmlns:SwInt="urn:swift:snl:ns.SwInt" xmlns:SwGbl="urn:swift:snl:ns.SwGbl" xmlns:SwSec="urn:swift:snl:ns.SwSec"><Saa:Revision>2.0.8</Saa:Revision><Saa:Header><Saa:MessageStatus><Saa:SenderReference>IMGTCBEBEECL299CANCELLATION1$2301102</Saa:SenderReference><Saa:SeqNr>000061</Saa:SeqNr><Saa:IsSuccess>true</Saa:IsSuccess></Saa:MessageStatus></Saa:Header></Saa:DataPDU>
-						// NAN SAA XML v2 sample :
-						// <?xml version="1.0" encoding="UTF-8" ?><Saa:DataPDU xmlns:Saa="urn:swift:saa:xsd:saa.2.0" xmlns:Sw="urn:swift:snl:ns.Sw" xmlns:SwInt="urn:swift:snl:ns.SwInt" xmlns:SwGbl="urn:swift:snl:ns.SwGbl" xmlns:SwSec="urn:swift:snl:ns.SwSec"><Saa:Revision>2.0.8</Saa:Revision><Saa:Header><Saa:MessageStatus><Saa:SenderReference>IMGTCBEBEECL299CANCELLATION1$2301102</Saa:SenderReference><Saa:SeqNr>000062</Saa:SeqNr><Saa:IsSuccess>false</Saa:IsSuccess><Saa:ErrorCode>EFORMAT</Saa:ErrorCode><Saa:ErrorText>Message text format error</Saa:ErrorText></Saa:MessageStatus></Saa:Header></Saa:DataPDU>
-
-						// Get message content
-						byte[] contentBytes = null;
-						String messageContent = null;
+			// Open all queues
+			if(queueManager != null) {
+				ArrayList<MQQueue> queue_connexions = new ArrayList<MQQueue>();
+				for(int i=0; i < queue_list.length; i++) {
+					if(queue_list[i] != null && queue_list[i].length() > 0) {
 						try {
-							contentBytes = new byte[message.getMessageLength()];
-							message.readFully(contentBytes);
-							messageContent = new String(contentBytes);
-						} catch (IOException e) {
-							logger.error("Can not get message from queue", e);
-							break;
+							queue_connexions.add(queueManager.initConnctionToQueue(queue_list[i]));
+							logger.debug("Queue " + queue_list[i] + " opened successfully");
+						}catch (Exception ex) {
+							logger.error("Cannot open queue : " + queue_list[i], ex);
+	                        continue;
 						}
+					}
+				}
 
-						String messageReference = null;
-						String fileExtension = ".xml";
-						if(messageContent !=null && messageContent.indexOf("<Saa:SenderReference>") != -1) {
-							messageReference = messageContent.substring(messageContent.indexOf("<Saa:SenderReference>") + 21,messageContent.indexOf("</Saa:SenderReference>"));
-						} else {
-							if(messageContent.indexOf("{1:") != -1) {
-								fileExtension = ".fin";
-								Matcher matcher = MT_MUR.matcher(messageContent);
-								String reference = extract(matcher);
-
-								if (reference == null || reference.isEmpty()) {
-								    matcher = MT_TRN.matcher(messageContent);
-								    reference = extract(matcher);
-								}
-
-								messageReference = (reference == null || reference.isEmpty()) ? "Unknown" : reference;
-							} else {
-								messageReference = "Unknown";
+				// Read messages in queues
+				boolean message_found = true;
+				while(message_found) {
+	
+					message_found = false;
+	
+					for(int i=0; i < queue_connexions.size(); i++) {
+	
+						// Get message
+						logger.debug("MQGET on queue " + queue_connexions.get(i).getResolvedQName());
+						MQMessage message = queueManager.mqGet(queue_connexions.get(i));
+						if (message != null) {
+							logger.debug("Message found");
+							message_found = true;
+	
+							// Process message
+							// messageType = 4 + feedback = 275 = PAN
+							// messageType = 4 + feedback = 65537 = NAN
+							// messageType = 8 + feedback = 0 = SWIFT Message
+	
+							// PAN SAA XML v2 sample :
+							// <?xml version="1.0" encoding="UTF-8" ?><Saa:DataPDU xmlns:Saa="urn:swift:saa:xsd:saa.2.0" xmlns:Sw="urn:swift:snl:ns.Sw" xmlns:SwInt="urn:swift:snl:ns.SwInt" xmlns:SwGbl="urn:swift:snl:ns.SwGbl" xmlns:SwSec="urn:swift:snl:ns.SwSec"><Saa:Revision>2.0.8</Saa:Revision><Saa:Header><Saa:MessageStatus><Saa:SenderReference>IMGTCBEBEECL299CANCELLATION1$2301102</Saa:SenderReference><Saa:SeqNr>000061</Saa:SeqNr><Saa:IsSuccess>true</Saa:IsSuccess></Saa:MessageStatus></Saa:Header></Saa:DataPDU>
+							// NAN SAA XML v2 sample :
+							// <?xml version="1.0" encoding="UTF-8" ?><Saa:DataPDU xmlns:Saa="urn:swift:saa:xsd:saa.2.0" xmlns:Sw="urn:swift:snl:ns.Sw" xmlns:SwInt="urn:swift:snl:ns.SwInt" xmlns:SwGbl="urn:swift:snl:ns.SwGbl" xmlns:SwSec="urn:swift:snl:ns.SwSec"><Saa:Revision>2.0.8</Saa:Revision><Saa:Header><Saa:MessageStatus><Saa:SenderReference>IMGTCBEBEECL299CANCELLATION1$2301102</Saa:SenderReference><Saa:SeqNr>000062</Saa:SeqNr><Saa:IsSuccess>false</Saa:IsSuccess><Saa:ErrorCode>EFORMAT</Saa:ErrorCode><Saa:ErrorText>Message text format error</Saa:ErrorText></Saa:MessageStatus></Saa:Header></Saa:DataPDU>
+	
+							// Get message content
+							byte[] contentBytes = null;
+							String messageContent = null;
+							try {
+								contentBytes = new byte[message.getMessageLength()];
+								message.readFully(contentBytes);
+								messageContent = new String(contentBytes);
+							} catch (IOException e) {
+								logger.error("Can not get message from queue", e);
+								break;
 							}
-						}
-
-						// Feedback
-						if(message.messageType == 4) {
-							// PAN
-							if(message.feedback == 275) {
-								logger.info("PAN Received for message reference = " + messageReference);
+	
+							String messageReference = null;
+							String fileExtension = ".xml";
+							if(messageContent !=null && messageContent.indexOf("<Saa:SenderReference>") != -1) {
+								messageReference = messageContent.substring(messageContent.indexOf("<Saa:SenderReference>") + 21,messageContent.indexOf("</Saa:SenderReference>"));
 							} else {
-								if(message.feedback == 65537) {
-									logger.info("NAN Received for message reference = " + messageReference);	
+								if(messageContent.indexOf("{1:") != -1) {
+									fileExtension = ".fin";
+									Matcher matcher = MT_MUR.matcher(messageContent);
+									String reference = extract(matcher);
+	
+									if (reference == null || reference.isEmpty()) {
+									    matcher = MT_TRN.matcher(messageContent);
+									    reference = extract(matcher);
+									}
+	
+									messageReference = (reference == null || reference.isEmpty()) ? "Unknown" : reference;
+								} else {
+									messageReference = "Unknown";
 								}
 							}
-
-						} else {
-							// Message
-							if(message.messageType == 8 && messageContent != null) {
-								logger.debug("SWIFT message received = " + messageContent);
-								logger.info("Message received : " + messageReference);
-								// Write received message to disk
-								if(contentBytes.length > 0) {
-									String timestamp = new SimpleDateFormat("yyyyMMdd-HHmmssSSS").format(new Date());
-									String fileName = timestamp + "-" + messageReference + fileExtension;
-						            String filePath = FOLDER_FROM_SWIFT + "/" + fileName;
-						            String archivePath = ARCHIVE_FOLDER + "/" + fileName;
-									try {
-										try (FileOutputStream fileOutputStream = new FileOutputStream(filePath)) {
-											fileOutputStream.write(contentBytes);
+	
+							// Feedback
+							if(message.messageType == 4) {
+								// PAN
+								if(message.feedback == 275) {
+									logger.info("PAN Received for message reference = " + messageReference);
+								} else {
+									if(message.feedback == 65537) {
+										logger.info("NAN Received for message reference = " + messageReference);	
+									}
+								}
+	
+							} else {
+								// Message
+								if(message.messageType == 8 && messageContent != null) {
+									logger.debug("SWIFT message received = " + messageContent);
+									logger.info("Message received : " + messageReference);
+									// Write received message to disk
+									if(contentBytes.length > 0) {
+										String timestamp = new SimpleDateFormat("yyyyMMdd-HHmmssSSS").format(new Date());
+										String fileName = timestamp + "-" + messageReference + fileExtension;
+							            String filePath = FOLDER_FROM_SWIFT + "/" + fileName;
+							            String archivePath = ARCHIVE_FOLDER + "/" + fileName;
+										try {
+											try (FileOutputStream fileOutputStream = new FileOutputStream(filePath)) {
+												fileOutputStream.write(contentBytes);
+											}
+											Files.copy(Paths.get(filePath), Paths.get(archivePath), StandardCopyOption.REPLACE_EXISTING);
+										} catch (IOException e) {
+											logger.error("Failed create file/copy file to archive : " + fileName, e);
 										}
-										Files.copy(Paths.get(filePath), Paths.get(archivePath), StandardCopyOption.REPLACE_EXISTING);
-									} catch (IOException e) {
-										logger.error("Failed create file/copy file to archive : " + fileName, e);
 									}
 								}
 							}
+	
+						} else {
+							logger.debug("No message found.");
 						}
-
 					}
 				}
-			}
-
-			// Close all queues
-			try {
-				for(int i=0; i < queue_connexions.size(); i++) {
-					queue_connexions.get(i).close();
+	
+				// Close all queues
+				try {
+					for(int i=0; i < queue_connexions.size(); i++) {
+						queue_connexions.get(i).close();
+						logger.debug("Queue " + queue_connexions.get(i).getResolvedQName() + " closed.");
+					}
+				} catch (MQException e) {
+					logger.error("Can not close queue", e);
 				}
-			} catch (MQException e) {
-				logger.error("Can not close queue", e);
+	
+				// Close Queue Manager connection
+				try {
+					queueManager.closeConnection();
+					logger.debug("Queue Manager " + connectionParams.getQmgrName() + " connection closed.");
+				} catch (Exception e) {
+					logger.error("Can not close connection to Queue Manager " + connectionParams.getQmgrName());
+				}
+			} else {
+				logger.debug("Not connected to Queue Manager");
 			}
-
-			// Close queue connection
-			queueManager.closeConnection();
 
 			// Sleeping
 			try {
+				logger.debug("Sleeping for " + connectionParams.getSleepingDuration() + " seconds");
 				Thread.sleep(1000 * connectionParams.getSleepingDuration());
 			} catch (InterruptedException e) {
 				logger.error("Error while sleeping", e);
