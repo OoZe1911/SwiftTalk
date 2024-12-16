@@ -56,7 +56,7 @@ public class FromSwift extends Thread {
 				queueManager = new MQManager(connectionParams.getQmgrHost(), connectionParams.getQmgrName(), connectionParams.getQmgrPort(), connectionParams.getChannel(), connectionParams.getCypher(), connectionParams.getSslPeer());
 				logger.debug("Connected to Queue Manager " + connectionParams.getQmgrName());
 			} catch (Exception e) {
-				logger.error("Can not connect to Queue Manager " + connectionParams.getQmgrName());
+				logger.error("Can not connect to Queue Manager " + connectionParams.getQmgrName(), e);
 				queueManager = null;
 			}
 
@@ -68,7 +68,7 @@ public class FromSwift extends Thread {
 						try {
 							queue_connexions.add(queueManager.initConnctionToQueue(queue_list[i]));
 							logger.debug("Queue " + queue_list[i] + " opened successfully");
-						}catch (Exception ex) {
+						} catch (Exception ex) {
 							logger.error("Cannot open queue : " + queue_list[i], ex);
 	                        continue;
 						}
@@ -188,7 +188,7 @@ public class FromSwift extends Thread {
 					queueManager.closeConnection();
 					logger.debug("Queue Manager " + connectionParams.getQmgrName() + " connection closed.");
 				} catch (Exception e) {
-					logger.error("Can not close connection to Queue Manager " + connectionParams.getQmgrName());
+					logger.error("Can not close connection to Queue Manager " + connectionParams.getQmgrName(), e);
 				}
 			} else {
 				logger.debug("Not connected to Queue Manager");

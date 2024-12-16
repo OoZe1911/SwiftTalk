@@ -30,22 +30,12 @@ public class MQManager {
 			props.put(MQConstants.SSL_CIPHER_SUITE_PROPERTY, cypher);
 		if(sslPeer!= null && sslPeer.length() > 0)
 			props.put(MQConstants.SSL_PEER_NAME_PROPERTY, sslPeer);
-		try {
-			qMgr = new MQQueueManager(qmgrname, props);
-		} catch (Exception e) {
-			logger.error("Can not open Queue Manager : " + qmgrname, e);
-			throw e;
-		}
+		qMgr = new MQQueueManager(qmgrname, props);
 	}
 
 	public MQQueue initConnctionToQueue(String queueName) throws Exception {
-		try {
-			MQQueue queue = qMgr.accessQueue(queueName, MQConstants.MQOO_OUTPUT | MQConstants.MQOO_INPUT_AS_Q_DEF);
-			return queue;
-		} catch (Exception e) {
-			logger.error("Can not initialize connection to queue : " + queueName, e);
-			throw e;
-		}
+		MQQueue queue = qMgr.accessQueue(queueName, MQConstants.MQOO_OUTPUT | MQConstants.MQOO_INPUT_AS_Q_DEF);
+		return queue;
 	}
 
 	public void mqPut(MQQueue queue, String content, ConnectionParams connectionParams) {
@@ -118,11 +108,6 @@ public class MQManager {
 	}
 
 	public void closeConnection() throws Exception {
-		try {
-			qMgr.disconnect();
-		} catch (Exception e) {
-			logger.error("Can not close connection with Queue Manager");
-			throw e;
-		}
+		qMgr.disconnect();
 	}
 }

@@ -45,7 +45,7 @@ public class ToSwift extends Thread {
 				queueManager = new MQManager(connectionParams.getQmgrHost(), connectionParams.getQmgrName(), connectionParams.getQmgrPort(), connectionParams.getChannel(), connectionParams.getCypher(), connectionParams.getSslPeer());
 				logger.debug("Connected to Queue Manager " + connectionParams.getQmgrName());
 			} catch (Exception e) {
-				logger.error("Can not connect to Queue Manager " + connectionParams.getQmgrName());
+				logger.error("Can not connect to Queue Manager " + connectionParams.getQmgrName(), e);
 				queueManager = null;
 			}
 
@@ -116,7 +116,7 @@ public class ToSwift extends Thread {
 					queueManager.closeConnection();
 					logger.debug("Queue Manager " + connectionParams.getQmgrName() + " connection closed.");
 				} catch (Exception e) {
-					logger.error("Can not close connection to Queue Manager " + connectionParams.getQmgrName());
+					logger.error("Can not close connection to Queue Manager " + connectionParams.getQmgrName(), e);
 				}
 
 			} else {
