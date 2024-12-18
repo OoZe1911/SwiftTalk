@@ -54,7 +54,7 @@ public class ToSwift extends Thread {
 				MQQueue queue = null;
 				try {
 					queue = queueManager.initConnctionToQueue(connectionParams.getQueueToSwift());
-					logger.debug("Queue " + queue + " opened successfully");
+					logger.debug("Queue " + queue.getResolvedQName() + " opened successfully");
 				} catch (Exception e) {
 					logger.error("Cannot open queue : " + queue, e);
 				}
