@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Scanner;
 import java.util.stream.Stream;
 
@@ -58,7 +59,7 @@ public class ToSwift extends Thread {
 				} catch (Exception e) {
 					logger.error("Cannot open queue : " + queue, e);
 				}
-	
+
 				// Scanning folder
 				Path directory = Paths.get(FOLDER_TO_SWIFT);
 				try (Stream<Path> stream = Files.list(directory)) {
@@ -66,11 +67,11 @@ public class ToSwift extends Thread {
 					MQManager finalQueueManager = queueManager;
 					stream.forEach(file -> {
 						if (Files.isRegularFile(file)) {
-	
+
 							if(!file.getFileName().toString().substring(0, 1).equals(".")) {
-	
+
 								if (!FileUtils.isFileLocked(new File(file.toString()))) {
-	
+
 									// Get file content
 									StringBuilder content = new StringBuilder();
 									try (Scanner scanner = new Scanner(new File(file.toString()))) {
@@ -80,29 +81,29 @@ public class ToSwift extends Thread {
 									} catch (FileNotFoundException e) {
 										logger.error("File not found", e);
 									}
-	
+
 									// Put message to queue
 									finalQueueManager.mqPut(finalQueue, content.toString(), connectionParams);
 									logger.info("File : " + file.toString() + " sent to MQ queue " + connectionParams.getQueueToSwift() + ".");
-	
+
 									// Archive file
-									archiveFile(file.getFileName().toString());
-	
+									archiveFile(file);
+
 								} else {
 									logger.warn("File " + file.toString() + " is locked, skipping.");
 								}
 							}
-	
+
 						}
 					});
-	
+
 					if(SwiftTalk.exit)
 						break;
-	
+
 				} catch (IOException e) {
 					logger.error("Can not send file to MQ queue", e);
 				}
-	
+
 				// Close queue
 				try {
 					queue.close();
@@ -110,7 +111,7 @@ public class ToSwift extends Thread {
 				} catch (MQException e) {
 					logger.error("Can not close queue " + queue.getResolvedQName(), e);
 				}
-	
+
 				// Close Queue Manager connection
 				try {
 					queueManager.closeConnection();
@@ -135,24 +136,20 @@ public class ToSwift extends Thread {
 
 	}
 
-	public static boolean archiveFile(String file) {
-		File physicalFile = new File(FOLDER_TO_SWIFT + File.separator + file);
-		if (physicalFile.renameTo(new File(ARCHIVE_FOLDER, physicalFile.getName()))) {
-			logger.info("File " + physicalFile.toString() + " archived in " + ARCHIVE_FOLDER);
-			return true;
-		}
-		if (FileUtils.fileExists(file)) {
-			logger.warn("A file with a same filename has been already archived");
-			File oldOne = new File(ARCHIVE_FOLDER + File.separator + physicalFile.getName());
-			oldOne.delete();
-			if (!physicalFile.renameTo(new File(ARCHIVE_FOLDER, physicalFile.getName()))) {
-				logger.info("Can not archives file " + physicalFile.toString() + " in " + ARCHIVE_FOLDER);
-				return false;
+	public static void archiveFile(Path file){
+		try {
+
+			Path archivePath = Paths.get(ARCHIVE_FOLDER);
+			if (!Files.exists(archivePath)) {
+				Files.createDirectories(archivePath);
 			}
-			return true;
+			Path destination = archivePath.resolve(file.getFileName());
+			Files.move(file, destination, StandardCopyOption.REPLACE_EXISTING);
+			logger.info("File " + file.toString() + " archived in " + ARCHIVE_FOLDER);
+
+		} catch (IOException ex) {
+			logger.error("Error archiving file " + file.toString(), ex);
 		}
-		logger.warn("File does not exist anymore, can not archive.");
-		return true;
 	}
 
 }
