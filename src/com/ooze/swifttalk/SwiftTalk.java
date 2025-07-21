@@ -117,8 +117,13 @@ public class SwiftTalk {
 
 		connectionParams.setTrustStore(conf.getProperty("TRUSTSORE"));
 		logger.info("TRUSTSORE = " + connectionParams.getTrustStore());
-		if (connectionParams.getTrustStore() != null && connectionParams.getTrustStore().length() > 0)
+		if (connectionParams.getTrustStore() != null && connectionParams.getTrustStore().length() > 0) {
+			if (!FileUtils.fileExists(connectionParams.getTrustStore())) {
+				logger.error("Trustore not found !");
+				System.exit(-1);
+			}
 			System.setProperty("javax.net.ssl.trustStore", connectionParams.getTrustStore());
+		}
 
 		connectionParams.setTrustStorePassword(conf.getProperty("TRUSTSORE_PASSWORD"));
 		logger.info("TRUSTSORE_PASSWORD = " + connectionParams.getTrustStorePassword());
@@ -127,8 +132,13 @@ public class SwiftTalk {
 
 		connectionParams.setKeyStore(conf.getProperty("KEYSTORE"));
 		logger.info("KEYSTORE = " + connectionParams.getKeyStore());
-		if (connectionParams.getKeyStore() != null && connectionParams.getKeyStore().length() > 0)
+		if (connectionParams.getKeyStore() != null && connectionParams.getKeyStore().length() > 0) {
+			if (!FileUtils.fileExists(connectionParams.getKeyStore())) {
+				logger.error("Keystore not found !");
+				System.exit(-1);
+			}
 			System.setProperty("javax.net.ssl.keyStore", connectionParams.getKeyStore());
+		}
 
 		connectionParams.setKeyStorePassword(conf.getProperty("KEYSTORE_PASSWORD"));
 		logger.info("KEYSTORE_PASSWORD = " + connectionParams.getKeyStorePassword());
@@ -156,7 +166,7 @@ public class SwiftTalk {
 				logger.error("ERROR : Folder " + ToSwift.FOLDER_TO_SWIFT + " does not exist.");
 				System.exit(-1);
 			}
-			logger.info("-> Starting sending thread");
+			logger.info("-> Sending thread started");
 			thread_to_swift = new ToSwift(connectionParams);
 			thread_to_swift.start();
 		}
@@ -167,7 +177,7 @@ public class SwiftTalk {
 				logger.error("ERROR : Folder " + FromSwift.FOLDER_FROM_SWIFT + " does not exist.");
 				System.exit(-1);
 			}
-			logger.info("-> Starting receiving thread");
+			logger.info("-> Receiving thread started");
 			thread_from_swift = new FromSwift(connectionParams);
 			thread_from_swift.start();
 		}

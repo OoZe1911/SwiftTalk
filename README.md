@@ -35,7 +35,7 @@ MQ Configuration :
 - QUEUE_FROM_SWIFT : queue used to receive SWIFT messages from SAA
 
 If TLS is enabled with the remote MQ Server :
-- CYPHER : cypher algorithm used for TLS
+- CIPHER : cypher algorithm used for TLS
 - TRUSTSTORE_PASSWORD : password of the tuststore file
 - KEYSTORE : path to the keystore file
 - KEYSTORE_PASSWORD : password of the keystore file
