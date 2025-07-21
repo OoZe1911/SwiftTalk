@@ -53,7 +53,7 @@ public class FromSwift extends Thread {
 			// Try to connect to MQ
 			MQManager queueManager = null;
 			try {
-				queueManager = new MQManager(connectionParams.getQmgrHost(), connectionParams.getQmgrName(), connectionParams.getQmgrPort(), connectionParams.getChannel(), connectionParams.getCypher(), connectionParams.getSslPeer());
+				queueManager = new MQManager(connectionParams.getQmgrHost(), connectionParams.getQmgrName(), connectionParams.getQmgrPort(), connectionParams.getChannel(), connectionParams.getCipher(), connectionParams.getSslPeer());
 				logger.debug("Connected to Queue Manager " + connectionParams.getQmgrName());
 			} catch (Exception e) {
 				logger.error("Can not connect to Queue Manager " + connectionParams.getQmgrName(), e);

@@ -7,7 +7,7 @@ public class ConnectionParams {
 	public String qmgrName=null;
 	public int qmgrPort=1414;
 	public String channel=null;
-	public String cypher=null;
+	public String cipher=null;
 	public String trustStore=null;
 	public String trustStorePassword=null;
 	public String keyStore=null;
@@ -45,11 +45,11 @@ public class ConnectionParams {
 	public void setChannel(String channel) {
 		this.channel = channel;
 	}
-	public String getCypher() {
-		return cypher;
+	public String getCipher() {
+		return cipher;
 	}
-	public void setCypher(String cypher) {
-		this.cypher = cypher;
+	public void setCipher(String cipher) {
+		this.cipher = cipher;
 	}
 	public String getTrustStore() {
 		return trustStore;

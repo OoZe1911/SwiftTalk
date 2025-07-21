@@ -112,8 +112,8 @@ public class SwiftTalk {
 		logger.info("QUEUE_FROM_SWIFT = " + connectionParams.getQueueFromSwift());
 
 		// MQ TLS
-		connectionParams.setCypher(conf.getProperty("CYPHER"));
-		logger.info("CYPHER = " + connectionParams.getCypher());
+		connectionParams.setCipher(conf.getProperty("CIPHER"));
+		logger.info("CIPHER = " + connectionParams.getCipher());
 
 		connectionParams.setTrustStore(conf.getProperty("TRUSTSORE"));
 		logger.info("TRUSTSORE = " + connectionParams.getTrustStore());
