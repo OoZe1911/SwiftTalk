@@ -43,6 +43,7 @@ public class MQManager {
 			MQPutMessageOptions pmo = new MQPutMessageOptions();
 			pmo.options = MQConstants.MQPMO_ASYNC_RESPONSE;
 			MQMessage message = new MQMessage();
+			message.messageType = MQConstants.MQMT_DATAGRAM;	// Mandatory to have response from SAA (PAN/NAN)
 			message.report = MQConstants.MQRO_PAN + MQConstants.MQRO_NAN;
 			message.replyToQueueManagerName = connectionParams.getQmgrName();
 			message.replyToQueueName = connectionParams.getReplyToQueue();
